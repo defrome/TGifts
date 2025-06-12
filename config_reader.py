@@ -6,7 +6,7 @@ class Config(BaseSettings):
     BOT_TOKEN: SecretStr
 
     WEBAPP_URL: str = "https://randomgiftss.web.app/"
-    WEBHOOK_URL: str = ""
+    WEBHOOK_URL: str = "http://localhost:8000"
     WEBHOOK_PATH: str = "/webhook"
 
     APP_HOST: str = "localhost"

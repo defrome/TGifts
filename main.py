@@ -40,5 +40,7 @@ async def webhook(request: Request) -> None:
     update = Update.model_validate(await request.json(), context={'bot': bot})
     await dp.feed_update(bot, update)
 
+@app.post("/api/donate", response_class=JSONResponse)
+
 if __name__ == "__main__":
     uvicorn.run(app, host=config.APP_HOST, port=config.APP_PORT)
