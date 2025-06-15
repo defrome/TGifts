@@ -4,12 +4,15 @@ from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
 from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery, Update
+from aiogram.methods.refund_star_payment import RefundStarPayment
+from aiogram.exceptions import TelegramAPIError
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from starlette.responses import JSONResponse
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 import logging
+from utils import INVALID_COMMAND, REFUND_SUCCESS, REFUND_FAIL
 
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
@@ -106,28 +109,28 @@ async def check_payment_status(message: types.Message):
         await message.reply("Вы еще не оплатили.")
 
 # Команда /refund
-# Команда /refund
 @dp.message(Command("refund"))
-async def handle_refund(message: types.Message):
-    user_id = message.from_user.id
-    logger.info(f"💬 Команда /refund от user_id={user_id}")
-
-    if user_id not in paid_users:
-        await message.reply("❌ Вы еще не оплатили, нечего возвращать.")
-        logger.warning(f"❗ Попытка возврата без оплаты от user_id={user_id}")
+async def process_refund(message: Message, bot: Bot) -> None:
+    parts = message.text.split()
+    if len(parts) != 2:
+        await message.answer(INVALID_COMMAND)
+        await message.delete()
         return
 
-    charge_id = paid_users[user_id]
-
+    transaction_id = parts[1]
     try:
-        # Симуляция возврата (здесь должна быть реальная логика возврата через API, если есть)
-        # Например: await external_api.refund(user_id, charge_id)
-        del paid_users[user_id]
-        await message.reply("✅ Возврат успешно выполнен.")
-        logger.info(f"💸 Возврат выполнен для user_id={user_id}, charge_id={charge_id}")
-    except Exception as e:
-        logger.error(f"🔥 Ошибка при возврате для user_id={user_id}: {e}")
-        await message.reply("❌ Возврат не удался.")
+        result = await bot(RefundStarPayment(
+            user_id=message.from_user.id,
+            telegram_payment_charge_id=transaction_id
+        ))
+
+        await message.answer(
+            REFUND_SUCCESS if result else REFUND_FAIL
+        )
+        await message.delete()
+    except TelegramAPIError:
+        await message.answer(REFUND_FAIL)
+        await message.delete()
 
 # Запуск бота
 async def start_bot():
