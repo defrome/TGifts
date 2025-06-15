@@ -74,6 +74,7 @@ async def create_invoice_link_bot():
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+# Апгрейд
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int):
     #имитируем инвентарь
@@ -85,6 +86,7 @@ async def upgrade_gift(gift_id: int):
     else:
         return {"Такого подарка нет в вашем инвентаре"}
 
+# Рулетка
 @app.post("/spin")
 async def roulette_spin(user_id: int):
     if user_id in paid_users:
