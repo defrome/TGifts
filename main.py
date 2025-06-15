@@ -152,7 +152,19 @@ async def start_bot():
 
 # Запуск FastAPI
 async def start_fastapi():
-    config = uvicorn.Config(app, host="localhost", port=8001, log_level="info")
+    ssl_config = {
+        "ssl_keyfile": "ssl/key.pem",
+        "ssl_certfile": "ssl/cert.pem",
+        "ssl_version": 2,  # PROTOCOL_TLS
+    } if os.path.exists("ssl/key.pem") else None
+
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=8001,
+        log_level="info",
+        **({} if ssl_config is None else ssl_config)
+    )
     server = uvicorn.Server(config)
     await server.serve()
 
