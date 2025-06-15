@@ -8,6 +8,8 @@ from aiogram.methods.refund_star_payment import RefundStarPayment
 from aiogram.exceptions import TelegramAPIError
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
+
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
@@ -27,6 +29,16 @@ dp = Dispatcher()
 app = FastAPI()
 router = Router()
 dp.include_router(router)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Память об оплативших
 paid_users = {}
