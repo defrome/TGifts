@@ -5,10 +5,10 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
 from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery, Update
 from aiogram.methods.refund_star_payment import RefundStarPayment
-from aiogram.methods.send_gift import SendGift
 from aiogram.exceptions import TelegramAPIError
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
+import certifi
 
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
@@ -23,6 +23,10 @@ logger = logging.getLogger(__name__)
 
 # Загрузка переменных окружения
 load_dotenv()
+
+# Установка пути к сертификатам
+os.environ['SSL_CERT_FILE'] = os.path.join(os.path.dirname(__file__), 'certs', 'cacert.pem')
+os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(__file__), 'certs', 'cacert.pem')
 
 # Инициализация бота и FastAPI
 bot = Bot(token=os.getenv("BOT_TOKEN"))
@@ -121,7 +125,6 @@ async def check_payment_status(message: types.Message):
     else:
         await message.reply("Вы еще не оплатили.")
 
-
 # Команда /refund
 @dp.message(Command("refund"))
 async def process_refund(message: Message, bot: Bot) -> None:
@@ -152,18 +155,13 @@ async def start_bot():
 
 # Запуск FastAPI
 async def start_fastapi():
-    ssl_config = {
-        "ssl_keyfile": "ssl/key.pem",
-        "ssl_certfile": "ssl/cert.pem",
-        "ssl_version": 2,  # PROTOCOL_TLS
-    } if os.path.exists("ssl/key.pem") else None
-
     config = uvicorn.Config(
         app,
-        host="0.0.0.0",
-        port=8001,
+        host="localhost",
+        port=8002,
         log_level="info",
-        **({} if ssl_config is None else ssl_config)
+        ssl_keyfile="certs/key.pem",
+        ssl_certfile="certs/cert.pem"
     )
     server = uvicorn.Server(config)
     await server.serve()
