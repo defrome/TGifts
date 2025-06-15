@@ -77,13 +77,21 @@ async def create_invoice_link_bot():
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int):
     #имитируем инвентарь
-    user_inventory = [1, 2, 5]
+    user_inventory = [1, 2, 3, 4, 5, 6, 7]
 
     if gift_id in user_inventory:
         upgrade_gift_id = random.randint(0, 7)
         return {"Gift upgrade": upgrade_gift_id}
     else:
         return {"Такого подарка нет в вашем инвентаре"}
+
+@app.post("/spin")
+async def roulette_spin(user_id: int):
+    if user_id in paid_users:
+        gift = random.randint(0,7)
+        return {"gift": gift}
+    else:
+        return {"error": "Оплата не прошла"}
 
 # Проверка оплаты (для фронта)
 @app.get("/status")
@@ -123,7 +131,7 @@ async def check_payment_status(message: types.Message):
     user_id = message.from_user.id
     logger.info(f"/status от user_id={user_id}")
     if user_id in paid_users:
-        await message.reply("Вы оплатили.")
+        true_payment = await message.reply("Вы оплатили.")
     else:
         await message.reply("Вы еще не оплатили.")
 
