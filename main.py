@@ -1,5 +1,8 @@
 import asyncio
 import os
+import random
+from typing import List
+
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
@@ -15,7 +18,6 @@ from starlette.responses import JSONResponse
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 import logging
-from utils import INVALID_COMMAND, REFUND_SUCCESS, REFUND_FAIL
 
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
@@ -23,10 +25,6 @@ logger = logging.getLogger(__name__)
 
 # Загрузка переменных окружения
 load_dotenv()
-
-# Установка пути к сертификатам
-os.environ['SSL_CERT_FILE'] = os.path.join(os.path.dirname(__file__), 'certs', 'cacert.pem')
-os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(__file__), 'certs', 'cacert.pem')
 
 # Инициализация бота и FastAPI
 bot = Bot(token=os.getenv("BOT_TOKEN"))
@@ -76,19 +74,23 @@ async def create_invoice_link_bot():
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+@app.post("/upgrade")
+async def upgrade_gift(gift_id: int):
+    #имитируем инвентарь
+    user_inventory = [1, 2, 5]
+
+    if gift_id in user_inventory:
+        upgrade_gift_id = random.randint(0, 7)
+        return {"Gift upgrade": upgrade_gift_id}
+    else:
+        return {"Такого подарка нет в вашем инвентаре"}
+
 # Проверка оплаты (для фронта)
 @app.get("/status")
 async def get_payment_status(user_id: int):
     logger.info(f"Запрос статуса от user_id={user_id}")
     return {"paid": user_id in paid_users}
 
-# Webhook (если будешь использовать)
-@app.post("/webhook")
-async def telegram_webhook(request: Request):
-    data = await request.json()
-    update = Update.model_validate(data, context={"bot": bot})
-    await dp.feed_update(bot, update)
-    return {"ok": True}
 
 # Заглушка lifespan (polling вместо webhook)
 @asynccontextmanager
@@ -130,7 +132,7 @@ async def check_payment_status(message: types.Message):
 async def process_refund(message: Message, bot: Bot) -> None:
     parts = message.text.split()
     if len(parts) != 2:
-        await message.answer(INVALID_COMMAND)
+        await message.answer()
         await message.delete()
         return
 
@@ -140,13 +142,9 @@ async def process_refund(message: Message, bot: Bot) -> None:
             user_id=message.from_user.id,
             telegram_payment_charge_id=transaction_id
         ))
-
-        await message.answer(
-            REFUND_SUCCESS if result else REFUND_FAIL
-        )
         await message.delete()
     except TelegramAPIError:
-        await message.answer(REFUND_FAIL)
+        await message.answer()
         await message.delete()
 
 # Запуск бота
@@ -160,8 +158,6 @@ async def start_fastapi():
         host="localhost",
         port=8002,
         log_level="info",
-        ssl_keyfile="certs/key.pem",
-        ssl_certfile="certs/cert.pem"
     )
     server = uvicorn.Server(config)
     await server.serve()
