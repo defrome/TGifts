@@ -5,6 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
 from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery, Update
 from aiogram.methods.refund_star_payment import RefundStarPayment
+from aiogram.methods.send_gift import SendGift
 from aiogram.exceptions import TelegramAPIError
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
@@ -119,6 +120,7 @@ async def check_payment_status(message: types.Message):
         await message.reply("Вы оплатили.")
     else:
         await message.reply("Вы еще не оплатили.")
+
 
 # Команда /refund
 @dp.message(Command("refund"))
