@@ -47,6 +47,8 @@ app.add_middleware(
 # Хранилища данных
 paid_users = {}
 user_inventory = {}
+
+# Список подарков и их айди
 gifts = [
     {"telegram_id": "5170145012310081615", "gift_id": "1"},
     {"telegram_id": "5170233102089322756", "gift_id": "2"},
