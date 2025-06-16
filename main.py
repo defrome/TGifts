@@ -100,7 +100,7 @@ async def create_invoice_link_bot():
         payload="{}",
         provider_token=os.getenv("PAYMENT_PROVIDER_TOKEN"),
         currency="XTR",
-        prices=[LabeledPrice(label="Кейс с подарками", amount=50)],
+        prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
     )
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
