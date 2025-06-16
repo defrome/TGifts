@@ -46,6 +46,8 @@ app.add_middleware(
 # Память об оплативших
 paid_users = {}
 
+user_inventory = []
+
 # Команда /start
 @dp.message(CommandStart())
 async def command_start_handler(message: types.Message):
@@ -77,8 +79,6 @@ async def create_invoice_link_bot():
 # Апгрейд
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int):
-    #имитируем инвентарь
-    user_inventory = [1, 2, 3, 4, 5, 6, 7]
 
     if gift_id in user_inventory:
         upgrade_gift_id = random.randint(0, 7)
@@ -90,7 +90,8 @@ async def upgrade_gift(gift_id: int):
 @app.post("/spin")
 async def roulette_spin(user_id: int):
     if user_id in paid_users:
-        gift = random.randint(0,7)
+        gift = random.randint(1,7)
+        user_inventory.append(gift)
         return {"gift": gift}
     else:
         return {"error": "Оплата не прошла"}
