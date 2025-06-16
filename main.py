@@ -6,7 +6,8 @@ from typing import List
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
-from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery
+from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery, MessageEntity
+from aiogram.methods.get_available_gifts import GetAvailableGifts
 from aiogram.methods.refund_star_payment import RefundStarPayment
 from aiogram.exceptions import TelegramAPIError
 from fastapi import FastAPI, HTTPException
@@ -89,6 +90,40 @@ async def create_invoice_link_bot():
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+@app.get("/sendgift")
+async def send_telegram_gift():
+    # ID подарка (указывается в соответствии с доступными подарками в Telegram)
+    gift_id = "premium_gift_3months"  # Пример ID (уточните актуальные ID у Telegram API)
+
+    # ID пользователя или чата, которому отправляем подарок
+    user_id = 123456789  # Замените на реальный ID пользователя
+    # ИЛИ chat_id = "@channel_username"  # Для канала
+
+    # Опциональные параметры
+    text = "🎁 Тест подарка"
+    text_entities = [
+        MessageEntity(type="bold", offset=0, length=2),  # Жирный смайлик 🎁
+        MessageEntity(type="italic", offset=3, length=8)  # Курсив "подарок"
+    ]
+
+    try:
+        # Отправка подарка
+        success = await bot.send_gift(
+            gift_id=gift_id,
+            user_id=user_id,  # ИЛИ chat_id=chat_id,
+            pay_for_upgrade=True,  # Оплатить из баланса бота
+            text=text,
+            text_entities=text_entities,  # ИЛИ text_parse_mode="HTML"
+        )
+
+        if success:
+            print("✅ Подарок успешно отправлен!")
+        else:
+            print("❌ Ошибка при отправке подарка.")
+
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e}")
+
 
 # Проверка инвентаря
 @app.get("/inventory_check")
@@ -96,6 +131,10 @@ async def inventory_check(user_id: int):
     inventory = await get_user_inventory(user_id)
     return {"inventory": inventory['gifts']}
 
+@app.get("/available_gifts")
+async def get_available_gifts():
+    Gifts = await bot.get_available_gifts()
+    return Gifts
 
 # Апгрейд подарка
 @app.post("/upgrade")
@@ -198,8 +237,8 @@ async def start_bot():
 async def start_fastapi():
     config = uvicorn.Config(
         app,
-        host="0.0.0.0",
-        port=8000,
+        host="localhost",
+        port=8001,
         log_level="info",
     )
     server = uvicorn.Server(config)
