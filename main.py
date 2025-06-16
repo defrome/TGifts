@@ -46,7 +46,8 @@ app.add_middleware(
 # Память об оплативших
 paid_users = {}
 
-user_inventory = []
+# Тестовое хранилище подарков юзера
+user_inventory = {}
 
 # Команда /start
 @dp.message(CommandStart())
@@ -76,17 +77,24 @@ async def create_invoice_link_bot():
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+async def init_user(user_id: int):
+    """Инициализирует запись для нового пользователя"""
+    if user_id not in user_inventory:
+        user_inventory[user_id] = {
+            'gifts': [],
+        }
+
 # Логика для тестов
 @app.get("/inventory_check")
 async def check_inventory(user_id: int):
-    return {f"Inventory of {user_id}": user_inventory}
+    return user_inventory[user_id]
 
 # Апгрейд
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int):
 
     if gift_id in user_inventory:
-        upgrade_gift_id = random.randint(0, 0)
+        upgrade_gift_id = random.randint(0, 7)
         user_inventory.remove(gift_id)
         user_inventory.append(upgrade_gift_id)
         if upgrade_gift_id == 0:
@@ -94,7 +102,7 @@ async def upgrade_gift(gift_id: int):
             return {"Fail": "Повезет в следующий раз"}
 
         else:
-            return {"Gift upgrade": gift_id}
+            return {"Gift upgrade": upgrade_gift_id}
     else:
         return {"Такого подарка нет в вашем инвентаре"}
 
