@@ -85,19 +85,13 @@ async def create_invoice_link_bot():
         payload="{}",
         provider_token=os.getenv("PAYMENT_PROVIDER_TOKEN"),
         currency="XTR",
-        prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
+        prices=[LabeledPrice(label="Кейс с подарками", amount=50)],
     )
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
 @app.get("/sendgift")
-async def send_telegram_gift():
-    # ID подарка (указывается в соответствии с доступными подарками в Telegram)
-    gift_id = "premium_gift_3months"  # Пример ID (уточните актуальные ID у Telegram API)
-
-    # ID пользователя или чата, которому отправляем подарок
-    user_id = 123456789  # Замените на реальный ID пользователя
-    # ИЛИ chat_id = "@channel_username"  # Для канала
+async def send_telegram_gift(gift_id: str, user_id: int):
 
     # Опциональные параметры
     text = "🎁 Тест подарка"
@@ -111,7 +105,7 @@ async def send_telegram_gift():
         success = await bot.send_gift(
             gift_id=gift_id,
             user_id=user_id,  # ИЛИ chat_id=chat_id,
-            pay_for_upgrade=True,  # Оплатить из баланса бота
+            pay_for_upgrade=False,  # Оплатить из баланса бота
             text=text,
             text_entities=text_entities,  # ИЛИ text_parse_mode="HTML"
         )
