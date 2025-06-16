@@ -84,41 +84,40 @@ async def init_user(user_id: int):
             'gifts': [],
         }
 
-async def add_gift(user_id: int, gift_id: int):
-    init_user(user_id)
-    user_inventory[user_id].append(gift_id)
 
-
+async def get_user_inventory(user_id: int):
+    """Возвращает инвентарь пользователя"""
+    return user_inventory.get(user_id)
 
 # Логика для тестов
 @app.get("/inventory_check")
-async def check_inventory(user_id: int):
-    return user_inventory[user_id]
+async def inventory_check(user_id: int):
+    get_user_inventory(user_id)
 
 # Апгрейд
 @app.post("/upgrade")
-async def upgrade_gift(gift_id: int):
+async def upgrade_gift(gift_id: int, user_id: int):
+    if user_id not in user_inventory:
+        init_user(user_id)
+    if gift_id not in user_inventory[user_id]['gifts']:
+        return {"Fail": "У вас нет такого подарка в инвентаре"}
 
-    if gift_id in user_inventory:
-        upgrade_gift_id = random.randint(0, 7)
-        user_inventory.remove(gift_id)
-        user_inventory.append(upgrade_gift_id)
-        if upgrade_gift_id == 0:
-            user_inventory.remove(upgrade_gift_id)
-            return {"Fail": "Повезет в следующий раз"}
+    user_inventory[user_id]['gifts'].remove(gift_id)
 
-        else:
-            return {"Gift upgrade": upgrade_gift_id}
-    else:
-        return {"Такого подарка нет в вашем инвентаре"}
+    # Генерируем новый (пример логики)
+    new_gift_id = random.randint(0, 7)
+    user_inventory[user_id]['gifts'].append(new_gift_id)
+
+    return {"New gift": new_gift_id}
 
 # Рулетка
 @app.post("/spin")
-async def roulette_spin(user_id: int):
+async def roulette_spin(user_id: int, gift_id: int):
     if user_id in paid_users:
-        gift = random.randint(1,7)
-        user_inventory.append(gift)
-        return {"gift": gift}
+        gift_id = random.randint(1,7)
+        init_user(user_id)
+        user_inventory[user_id].append(gift_id)
+        return {"gift_id": gift_id}
     else:
         return {"error": "Оплата не прошла"}
 
