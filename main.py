@@ -84,6 +84,12 @@ async def init_user(user_id: int):
             'gifts': [],
         }
 
+async def add_gift(user_id: int, gift_id: int):
+    init_user(user_id)
+    user_inventory[user_id].append(gift_id)
+
+
+
 # Логика для тестов
 @app.get("/inventory_check")
 async def check_inventory(user_id: int):
