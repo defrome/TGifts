@@ -6,10 +6,10 @@ from typing import List
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
-from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery, Update
+from aiogram.types import LabeledPrice, Message, WebAppInfo, PreCheckoutQuery
 from aiogram.methods.refund_star_payment import RefundStarPayment
 from aiogram.exceptions import TelegramAPIError
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 import certifi
 
@@ -43,11 +43,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Память об оплативших
+# Хранилища данных
 paid_users = {}
-
-# Тестовое хранилище подарков юзера
 user_inventory = {}
+
+
+async def init_user(user_id: int):
+    """Инициализирует запись для нового пользователя"""
+    if user_id not in user_inventory:
+        user_inventory[user_id] = {'gifts': []}
+
+
+async def get_user_inventory(user_id: int):
+    """Возвращает инвентарь пользователя"""
+    await init_user(user_id)
+    return user_inventory.get(user_id)
+
 
 # Команда /start
 @dp.message(CommandStart())
@@ -63,87 +74,71 @@ async def command_start_handler(message: types.Message):
     )
     logger.info(f"/start от user_id={message.from_user.id}")
 
+
 # Генерация инвойса
 @app.get("/payment")
 async def create_invoice_link_bot():
     payment_link = await bot.create_invoice_link(
         title="Case",
         description="1 stars",
-        payload="{}",  # Можешь вставить user_id, если нужно
-        provider_token="",  # Укажи токен от Telegram
+        payload="{}",
+        provider_token=os.getenv("PAYMENT_PROVIDER_TOKEN"),
         currency="XTR",
         prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
     )
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
-async def init_user(user_id: int):
-    """Инициализирует запись для нового пользователя"""
-    if user_id not in user_inventory:
-        user_inventory[user_id] = {
-            'gifts': [],
-        }
 
-
-async def get_user_inventory(user_id: int):
-    """Возвращает инвентарь пользователя"""
-    return user_inventory.get(user_id)
-
-# Логика для тестов
+# Проверка инвентаря
 @app.get("/inventory_check")
 async def inventory_check(user_id: int):
-    get_user_inventory(user_id)
+    inventory = await get_user_inventory(user_id)
+    return {"inventory": inventory['gifts']}
 
-# Апгрейд
+
+# Апгрейд подарка
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int, user_id: int):
-    if user_id not in user_inventory:
-        init_user(user_id)
+    await init_user(user_id)
+
     if gift_id not in user_inventory[user_id]['gifts']:
-        return {"Fail": "У вас нет такого подарка в инвентаре"}
+        raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
 
     user_inventory[user_id]['gifts'].remove(gift_id)
-
-    # Генерируем новый (пример логики)
     new_gift_id = random.randint(0, 7)
     user_inventory[user_id]['gifts'].append(new_gift_id)
 
-    return {"New gift": new_gift_id}
+    return {"new_gift_id": new_gift_id}
+
 
 # Рулетка
 @app.post("/spin")
-async def roulette_spin(user_id: int, gift_id: int):
-    if user_id in paid_users:
-        gift_id = random.randint(1,7)
-        init_user(user_id)
-        user_inventory[user_id].append(gift_id)
-        return {"gift_id": gift_id}
-    else:
-        return {"error": "Оплата не прошла"}
+async def roulette_spin(user_id: int):
+    if user_id not in paid_users:
+        raise HTTPException(status_code=402, detail="Оплата не прошла")
 
-# Проверка оплаты (для фронта)
+    await init_user(user_id)
+    gift_id = random.randint(1, 7)
+    user_inventory[user_id]['gifts'].append(gift_id)
+
+    return {"gift_id": gift_id}
+
+
+# Проверка статуса оплаты
 @app.get("/status")
 async def get_payment_status(user_id: int):
     logger.info(f"Запрос статуса от user_id={user_id}")
     return {"paid": user_id in paid_users}
 
 
-# Заглушка lifespan (polling вместо webhook)
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.warning("⚠️ Webhook отключён — используется polling.")
-    yield
-    logger.info("👋 Завершение FastAPI.")
-
-app.router.lifespan_context = lifespan
-
-# Подтверждение оплаты
+# Обработчики платежей
 @router.pre_checkout_query(lambda q: True)
 async def on_pre_checkout(pre_checkout_q: PreCheckoutQuery):
     logger.info(f"pre_checkout_query от user_id={pre_checkout_q.from_user.id}")
     await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
 
-# Обработка успешного платежа
+
 @router.message()
 async def on_message(msg: types.Message):
     if msg.successful_payment:
@@ -153,23 +148,23 @@ async def on_message(msg: types.Message):
         logger.info(f"✅ Успешный платеж от user_id={user_id}, charge_id={charge_id}")
         await msg.reply("Спасибо за ваш платеж! Ваша покупка завершена.")
 
-# Команда /status
+
+# Команды бота
 @dp.message(Command("status"))
 async def check_payment_status(message: types.Message):
     user_id = message.from_user.id
     logger.info(f"/status от user_id={user_id}")
     if user_id in paid_users:
-        true_payment = await message.reply("Вы оплатили.")
+        await message.reply("Вы оплатили.")
     else:
         await message.reply("Вы еще не оплатили.")
 
-# Команда /refund
+
 @dp.message(Command("refund"))
-async def process_refund(message: Message, bot: Bot) -> None:
+async def process_refund(message: Message):
     parts = message.text.split()
     if len(parts) != 2:
-        await message.answer()
-        await message.delete()
+        await message.answer("Использование: /refund <transaction_id>")
         return
 
     transaction_id = parts[1]
@@ -178,32 +173,45 @@ async def process_refund(message: Message, bot: Bot) -> None:
             user_id=message.from_user.id,
             telegram_payment_charge_id=transaction_id
         ))
-        await message.delete()
-    except TelegramAPIError:
-        await message.answer()
+        await message.answer("Возврат успешно выполнен")
+    except TelegramAPIError as e:
+        await message.answer(f"Ошибка возврата: {str(e)}")
+    finally:
         await message.delete()
 
-# Запуск бота
+
+# Запуск приложения
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("🚀 Запуск приложения")
+    yield
+    logger.info("👋 Завершение работы")
+
+
+app.router.lifespan_context = lifespan
+
+
 async def start_bot():
     await dp.start_polling(bot)
 
-# Запуск FastAPI
+
 async def start_fastapi():
     config = uvicorn.Config(
         app,
-        host="localhost",
-        port=8002,
+        host="0.0.0.0",
+        port=8000,
         log_level="info",
     )
     server = uvicorn.Server(config)
     await server.serve()
 
-# Главный запуск
+
 async def main():
     await asyncio.gather(
         start_bot(),
         start_fastapi()
     )
+
 
 if __name__ == "__main__":
     asyncio.run(main())
