@@ -76,13 +76,25 @@ async def create_invoice_link_bot():
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+# Логика для тестов
+@app.get("/inventory_check")
+async def check_inventory(user_id: int):
+    return {f"Inventory of {user_id}": user_inventory}
+
 # Апгрейд
 @app.post("/upgrade")
 async def upgrade_gift(gift_id: int):
 
     if gift_id in user_inventory:
-        upgrade_gift_id = random.randint(0, 7)
-        return {"Gift upgrade": upgrade_gift_id}
+        upgrade_gift_id = random.randint(0, 0)
+        user_inventory.remove(gift_id)
+        user_inventory.append(upgrade_gift_id)
+        if upgrade_gift_id == 0:
+            user_inventory.remove(upgrade_gift_id)
+            return {"Fail": "Повезет в следующий раз"}
+
+        else:
+            return {"Gift upgrade": gift_id}
     else:
         return {"Такого подарка нет в вашем инвентаре"}
 
