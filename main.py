@@ -165,14 +165,37 @@ async def upgrade_gift(gift_id: int, user_id: int):
 # Рулетка
 @app.post("/spin")
 async def roulette_spin(user_id: int):
+    # Проверяем, что пользователь оплатил
     if user_id not in paid_users:
-        raise HTTPException(status_code=402, detail="Оплата не прошла")
+        raise HTTPException(
+            status_code=402,
+            detail="Payment required. Please pay first."
+        )
 
-    await init_user(user_id)
-    gift_id = random.randint(1, 7)
-    user_inventory[user_id]['gifts'].append(gift_id)
+    try:
+        # Инициализируем пользователя (если еще не инициализирован)
+        await init_user(user_id)
 
-    return {"gift_id": gift_id}
+        # Выбираем случайный подарок
+        gift_id = random.randint(1, 11)
+
+        # Добавляем подарок в инвентарь
+        user_inventory[user_id].setdefault('gifts', []).append(gift_id)
+
+        # Безопасно удаляем пользователя из списка оплативших
+        paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+
+        return {
+            "status": "success",
+            "gift_id": gift_id,
+        }
+
+    except Exception as e:
+        # В случае ошибки оставляем пользователя в paid_users для повторной попытки
+        raise HTTPException(
+            status_code=500,
+            detail=f"Spin failed: {str(e)}"
+        )
 
 
 # Проверка статуса оплаты
