@@ -50,17 +50,17 @@ user_inventory = {}
 
 # Список подарков и их айди
 gifts = [
-    {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_url": "http://localhost:8001/gifts/heart.png"},
-    {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸"},
-    {"telegram_id": "5170250947678437525", "gift_id": "3", "emoji": "🎁"},
-    {"telegram_id": "5168103777563050263", "gift_id": "4", "emoji": "🌹"},
-    {"telegram_id": "5170144170496491616", "gift_id": "5", "emoji": "🎂"},
-    {"telegram_id": "5170314324215857265", "gift_id": "6", "emoji": "💐"},
-    {"telegram_id": "5170564780938756245", "gift_id": "7", "emoji": "🚀"},
-    {"telegram_id": "5168043875654172773", "gift_id": "8", "emoji": "🏆"},
-    {"telegram_id": "5170690322832818290", "gift_id": "9", "emoji": "💍"},
-    {"telegram_id": "5170521118301225164", "gift_id": "10", "emoji": "💎"},
-    {"telegram_id": "6028601630662853006", "gift_id": "11", "emoji": "🍾"}
+    {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/heart.png?token=GHSAT0AAAAAADFIA2TDHMUWRTDDJVK5GPQG2CRN2GA"},
+    {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/bear.png?token=GHSAT0AAAAAADFIA2TCUM6LUI6OKRLNFA5K2CRN27A"},
+    {"telegram_id": "5170250947678437525", "gift_id": "3", "emoji": "🎁", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/gift.png?token=GHSAT0AAAAAADFIA2TD5ISLKE4HVAZ32TI42CRN33A"},
+    {"telegram_id": "5168103777563050263", "gift_id": "4", "emoji": "🌹", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/rose.png?token=GHSAT0AAAAAADFIA2TCFOQRVVYP4LYPMQ762CRN4FQ"},
+    {"telegram_id": "5170144170496491616", "gift_id": "5", "emoji": "🎂", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/cake.png?token=GHSAT0AAAAAADFIA2TCJQAMTWITBWSNEY622CRN4SQ"},
+    {"telegram_id": "5170314324215857265", "gift_id": "6", "emoji": "💐", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/flowers.png?token=GHSAT0AAAAAADFIA2TDNRGWCYSWOBWNM7662CRN43Q"},
+    {"telegram_id": "5170564780938756245", "gift_id": "7", "emoji": "🚀", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/rocket.png?token=GHSAT0AAAAAADFIA2TCOURUT3UPREZTTS7U2CRN5GA"},
+    {"telegram_id": "5168043875654172773", "gift_id": "8", "emoji": "🏆", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/cup.png?token=GHSAT0AAAAAADFIA2TCPSSIGRQHHXBZWFUA2CRN5RA"},
+    {"telegram_id": "5170690322832818290", "gift_id": "9", "emoji": "💍", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/ring.png?token=GHSAT0AAAAAADFIA2TCN6XKNMLRJ6FUQBXA2CRN55A"},
+    {"telegram_id": "5170521118301225164", "gift_id": "10", "emoji": "💎", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/brilliant.png?token=GHSAT0AAAAAADFIA2TC7WPCASTWOEHVLN7O2CRN6FQ"},
+    {"telegram_id": "6028601630662853006", "gift_id": "11", "emoji": "🍾", "image_url": "https://raw.githubusercontent.com/defrome/TGifts/refs/heads/main/images/shampane.png?token=GHSAT0AAAAAADFIA2TDZALXHNPGSPZRVAME2CRN6QQ"}
 ]
 
 
