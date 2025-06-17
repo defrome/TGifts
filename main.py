@@ -50,7 +50,7 @@ user_inventory = {}
 
 # Список подарков и их айди
 gifts = [
-    {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_url": ""},
+    {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_url": "http://localhost:8001/gifts/heart.png"},
     {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸"},
     {"telegram_id": "5170250947678437525", "gift_id": "3", "emoji": "🎁"},
     {"telegram_id": "5168103777563050263", "gift_id": "4", "emoji": "🌹"},
