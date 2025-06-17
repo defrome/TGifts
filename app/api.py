@@ -1,6 +1,6 @@
 import os
 
-from aiogram.types import LabeledPrice
+from aiogram.types import LabeledPrice, MessageEntity
 from fastapi import FastAPI, HTTPException
 from bot.bot import bot
 from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory
@@ -10,7 +10,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
-
 
 @app.get("/payment")
 async def create_invoice_link_bot():
@@ -22,21 +21,113 @@ async def create_invoice_link_bot():
         currency="XTR",
         prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
     )
+    logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
 
+@app.get("/sendgift")
+async def send_telegram_gift(gift_id: str, user_id: int):
 
+    # Опциональные параметры
+    text = "🎁 Тест подарка"
+    text_entities = [
+        MessageEntity(type="bold", offset=0, length=2),  # Жирный смайлик 🎁
+        MessageEntity(type="italic", offset=3, length=8)  # Курсив "подарок"
+    ]
+
+
+    try:
+        # Отправка подарка
+        success = await bot.send_gift(
+            gift_id=gift_id,
+            user_id=user_id,  # ИЛИ chat_id=chat_id,
+            pay_for_upgrade=False,  # Оплатить из баланса бота
+            text=text,
+            text_entities=text_entities,  # ИЛИ text_parse_mode="HTML"
+        )
+
+        if success:
+            print("✅ Подарок успешно отправлен!")
+        else:
+            print("❌ Ошибка при отправке подарка.")
+
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e}")
+
+
+# Проверка инвентаря
+@app.get("/inventory_check")
+async def inventory_check(user_id: int):
+    inventory = await get_user_inventory(user_id)
+    return {"inventory": inventory['gifts']}
+
+@app.get("/available_gifts")
+async def get_available_gifts():
+    Gifts = await bot.get_available_gifts()
+    return Gifts
+
+# Апгрейд подарка
+@app.post("/upgrade")
+async def upgrade_gift(gift_id: int, user_id: int):
+    await init_user(user_id)
+
+    if gift_id not in user_inventory[user_id]['gifts']:
+        raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
+
+    user_inventory[user_id]['gifts'].remove(gift_id)
+    new_gift_id = random.choice(gifts)
+    user_inventory[user_id]['gifts'].append(new_gift_id)
+
+    return {"new_gift_id": new_gift_id['telegram_id'],
+            "emoji": new_gift_id['emoji'],
+            "image_url": new_gift_id['image_path']}
+
+
+
+# Рулетка
 @app.post("/spin")
 async def roulette_spin(user_id: int):
+    # Проверяем, что пользователь оплатил
     if user_id not in paid_users:
-        raise HTTPException(status_code=402, detail="Payment required")
+        raise HTTPException(
+            status_code=402,
+            detail="Payment required. Please pay first."
+        )
 
-    await init_user(user_id)
-    gift = random.choice(gifts)
-    user_inventory[user_id]['gifts'].append(gift)
-    paid_users.pop(user_id, None)
+    try:
+        # Инициализируем пользователя (если еще не инициализирован)
+        await init_user(user_id)
 
-    return {
-        "gift_id": gift['telegram_id'],
-        "emoji": gift['emoji'],
-        "image_url": gift['image_path']
-    }
+        # Выбираем случайный подарок
+        gift_id = random.choice(gifts)
+
+
+        # Добавляем подарок в инвентарь
+        user_inventory[user_id].setdefault('gifts', []).append(gift_id)
+
+        # Безопасно удаляем пользователя из списка оплативших
+        paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+
+        return {"gift_id": gift_id['telegram_id'],
+                "emoji": gift_id['emoji'],
+                "image_url": gift_id['image_path'],
+                "star": gift_id['star']}
+
+    except Exception as e:
+        # В случае ошибки оставляем пользователя в paid_users для повторной попытки
+        raise HTTPException(
+            status_code=500,
+            detail=f"Spin failed: {str(e)}"
+        )
+
+
+# Проверка статуса оплаты
+@app.get("/status")
+async def get_payment_status(user_id: int):
+    logger.info(f"Запрос статуса от user_id={user_id}")
+    return {"paid": user_id in paid_users}
+
+
+# Заглушка на рефералку
+@app.get("/first_referral")
+async def first_referral(user_id: int):
+    return user_id

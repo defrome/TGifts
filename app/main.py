@@ -2,12 +2,24 @@ import asyncio
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
 from bot.bot import bot, dp
 from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
-from app.api import app as fastapi_app
+from app.api import app as fastapi_app, app
 import logging
 
 logger = logging.getLogger(__name__)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
