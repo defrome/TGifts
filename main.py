@@ -54,7 +54,7 @@ gifts = [
     {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_path": "https://i.ibb.co/83crdxt/heart.png"},
     {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸", "image_path": "https://i.ibb.co/MyYTrssS/bear.png"},
     {"telegram_id": "5170250947678437525", "gift_id": "3", "emoji": "🎁", "image_path": "https://i.ibb.co/9HbdKTST/gift.png"},
-    {"telegram_id": "5168103777563050263", "gift_id": "4", "emoji": "🌹", "image_path": "https://ibb.co/SXCszjPG"},
+    {"telegram_id": "5168103777563050263", "gift_id": "4", "emoji": "🌹", "image_path": "https://i.ibb.co/tMrm9G4F/rose.png"},
     {"telegram_id": "5170144170496491616", "gift_id": "5", "emoji": "🎂", "image_path": "https://ibb.co/M5JXgtJS"},
     {"telegram_id": "5170314324215857265", "gift_id": "6", "emoji": "💐", "image_path": "https://ibb.co/v60WJvCM"},
     {"telegram_id": "5170564780938756245", "gift_id": "7", "emoji": "🚀", "image_path": "https://ibb.co/QFWrqQTL"},
