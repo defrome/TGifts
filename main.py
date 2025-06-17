@@ -209,6 +209,13 @@ async def get_payment_status(user_id: int):
     return {"paid": user_id in paid_users}
 
 
+# Заглушка на рефералку
+@app.get("/first_referral")
+async def first_referral(user_id: int):
+    return user_id
+
+
+
 # Обработчики платежей
 @router.pre_checkout_query(lambda q: True)
 async def on_pre_checkout(pre_checkout_q: PreCheckoutQuery):
