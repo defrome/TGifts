@@ -156,10 +156,10 @@ async def upgrade_gift(gift_id: int, user_id: int):
         raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
 
     user_inventory[user_id]['gifts'].remove(gift_id)
-    new_gift_id = random.randint(0, 7)
+    new_gift_id = random.choice(gifts)
     user_inventory[user_id]['gifts'].append(new_gift_id)
 
-    return {"new_gift_id": new_gift_id}
+    return {"new_gift_id": new_gift_id['telegram_id']}
 
 
 # Рулетка
@@ -177,7 +177,8 @@ async def roulette_spin(user_id: int):
         await init_user(user_id)
 
         # Выбираем случайный подарок
-        gift_id = random.randint(1, 11)
+        gift_id = random.choice(gifts)
+
 
         # Добавляем подарок в инвентарь
         user_inventory[user_id].setdefault('gifts', []).append(gift_id)
@@ -186,8 +187,7 @@ async def roulette_spin(user_id: int):
         paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
 
         return {
-            "status": "success",
-            "gift_id": gift_id,
+            "gift_id": gift_id['telegram_id'],
         }
 
     except Exception as e:
