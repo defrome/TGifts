@@ -59,9 +59,9 @@ gifts = [
     {"telegram_id": "5170314324215857265", "gift_id": "6", "emoji": "💐", "image_path": "https://i.ibb.co/zTqgSHWt/flowers.png"},
     {"telegram_id": "5170564780938756245", "gift_id": "7", "emoji": "🚀", "image_path": "https://i.ibb.co/MDzMjStr/rocket.png"},
     {"telegram_id": "5168043875654172773", "gift_id": "8", "emoji": "🏆", "image_path": "https://i.ibb.co/Rk3kQxB2/cup.png"},
-    {"telegram_id": "5170690322832818290", "gift_id": "9", "emoji": "💍", "image_path": "https://ibb.co/tw1YtLqc"},
-    {"telegram_id": "5170521118301225164", "gift_id": "10", "emoji": "💎", "image_path": "https://ibb.co/d4ZwM0kq"},
-    {"telegram_id": "6028601630662853006", "gift_id": "11", "emoji": "🍾", "image_path": "https://ibb.co/SD6xpGgD"}
+    {"telegram_id": "5170690322832818290", "gift_id": "9", "emoji": "💍", "image_path": "https://i.ibb.co/9mdyLZb2/ring.png"},
+    {"telegram_id": "5170521118301225164", "gift_id": "10", "emoji": "💎", "image_path": "https://i.ibb.co/Zz9pX6cP/brilliant.png"},
+    {"telegram_id": "6028601630662853006", "gift_id": "11", "emoji": "🍾", "image_path": "https://i.ibb.co/9mpvjS0m/shampane.png"}
 ]
 
 
