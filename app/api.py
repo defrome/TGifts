@@ -67,7 +67,12 @@ async def send_telegram_gift(gift_id: str, user_id: int):
 @app.get("/inventory_check")
 async def inventory_check(user_id: int):
     inventory = await get_user_inventory(user_id)
-    return {"inventory": inventory['gifts']}
+    return {"inventory": inventory}
+
+@app.get("/paid_check")
+async def paid_check():
+    paid = paid_users
+    return {"paid_users": paid}
 
 @app.get("/available_gifts")
 async def get_available_gifts():
@@ -76,19 +81,38 @@ async def get_available_gifts():
 
 # Апгрейд подарка
 @app.post("/upgrade")
-async def upgrade_gift(gift_id: int, user_id: int):
+async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип gift_id на str
     await init_user(user_id)
 
-    if gift_id not in user_inventory[user_id]['gifts']:
+    # Проверяем наличие подарка в инвентаре
+    user_gifts = user_inventory[user_id]['gifts']
+    gift_to_upgrade = next((g for g in user_gifts if g['gift_id'] == gift_id), None)
+
+    if not gift_to_upgrade:
         raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
 
-    user_inventory[user_id]['gifts'].remove(gift_id)
-    new_gift_id = random.choice(gifts)
-    user_inventory[user_id]['gifts'].append(new_gift_id)
+    # Удаляем старый подарок
+    user_gifts.remove(gift_to_upgrade)
 
-    return {"new_gift_id": new_gift_id['telegram_id'],
-            "emoji": new_gift_id['emoji'],
-            "image_url": new_gift_id['image_path']}
+    # Выбираем случайный новый подарок (можно добавить логику улучшения)
+    new_gift = random.choice(gifts)
+
+    # Добавляем новый подарок в инвентарь
+    user_gifts.append({
+        "telegram_id": new_gift['telegram_id'],
+        "gift_id": new_gift['gift_id'],
+        "emoji": new_gift['emoji'],
+        "image_path": new_gift['image_path'],
+        "star": new_gift['star']
+    })
+
+    return {
+        "new_telegram_id": new_gift['telegram_id'],
+        "new_gift_id": new_gift['gift_id'],
+        "emoji": new_gift['emoji'],
+        "image_url": new_gift['image_path'],
+        "star": new_gift['star']
+    }
 
 
 
@@ -111,12 +135,13 @@ async def roulette_spin(user_id: int):
 
 
         # Добавляем подарок в инвентарь
-        user_inventory[user_id].setdefault('gifts', []).append(gift_id)
+        user_inventory[user_id]['gifts'].append(gift_id)
 
         # Безопасно удаляем пользователя из списка оплативших
         paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
 
-        return {"gift_id": gift_id['telegram_id'],
+        return {"telegram_gift_id": gift_id['telegram_id'],
+                "gift_id": gift_id['gift_id'],
                 "emoji": gift_id['emoji'],
                 "image_url": gift_id['image_path'],
                 "star": gift_id['star']}
