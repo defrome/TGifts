@@ -2,8 +2,10 @@ import os
 
 from aiogram.types import LabeledPrice, MessageEntity
 from fastapi import FastAPI, HTTPException
+from starlette.responses import JSONResponse
+
 from bot.bot import bot
-from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory
+from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts
 import random
 import logging
 
@@ -23,6 +25,13 @@ async def create_invoice_link_bot():
     )
     logger.info("Создана ссылка на оплату")
     return {"invoice_link": payment_link}
+
+
+@app.get("/get_spin_gifts", response_class=JSONResponse)
+async def get_spin_gifts():
+
+    return spin_gifts
+
 
 @app.get("/sendgift")
 async def send_telegram_gift(gift_id: str, user_id: int):
