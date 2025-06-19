@@ -62,6 +62,24 @@ async def send_telegram_gift(gift_id: str, user_id: int):
     except Exception as e:
         print(f"⚠️ Ошибка: {e}")
 
+@app.post("/referral_subscribe")
+async def subscribe_referral(user_id: int):
+
+    try:
+        chat_member = await bot.get_chat_member(chat_id="@tgiftstestdev", user_id=user_id)
+
+        if chat_member.status in ['member', 'administrator', 'creator']:
+            return {"status": "subscribed"}
+
+        else:
+            return {"status": "not_subscribed"}
+
+
+    except Exception as e:
+
+        return {"status": "error", "details": str(e)}
+
+
 
 # Проверка инвентаря
 @app.get("/inventory_check")
