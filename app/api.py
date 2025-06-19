@@ -70,7 +70,6 @@ async def subscribe_referral(user_id: int):
         chat_member = await bot.get_chat_member(chat_id="@tgiftstestdev", user_id=user_id)
 
         if chat_member.status in ['member', 'administrator', 'creator']:
-            referral_users.add(user_id)
             return {"status": "subscribed"}
 
         else:
@@ -202,8 +201,3 @@ async def get_payment_status(user_id: int):
     logger.info(f"Запрос статуса от user_id={user_id}")
     return {"paid": user_id in paid_users}
 
-
-# Заглушка на рефералку
-@app.get("/first_referral")
-async def first_referral(user_id: int):
-    return user_id
