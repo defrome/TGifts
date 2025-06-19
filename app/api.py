@@ -34,42 +34,6 @@ async def get_spin_gifts():
     return spin_gifts
 
 
-@app.post("/sellgift")
-async def sell_gift(user_id: int, gift_id: int):
-    try:
-        # Проверяем существование пользователя и подарка
-        if user_id not in user_inventory:
-            return {"status": "error", "message": "User not found"}
-
-        if 'gifts' not in user_inventory[user_id] or gift_id not in user_inventory[user_id]['gifts']:
-            return {"status": "error", "message": "Gift not found in user inventory"}
-
-        # Проверяем существование gift_id в словаре gifts
-        if gift_id not in gifts:
-            return {"status": "error", "message": "Invalid gift ID"}
-
-        # Получаем стоимость подарка
-        star_value = gifts[gift_id]['star']
-
-        # Удаляем подарок из инвентаря
-        user_inventory[user_id]['gifts'].remove(gift_id)
-
-        # Добавляем звезды пользователю (лучше хранить как число, а не список)
-        if 'stars' not in user_inventory[user_id]:
-            user_inventory[user_id]['stars'] = 0
-        user_inventory[user_id]['stars'] += star_value
-
-        return {
-            "status": "success",
-            "message": "Gift sold successfully",
-            "stars_earned": star_value,
-            "total_stars": user_inventory[user_id]['stars'],
-            "remaining_gifts": len(user_inventory[user_id]['gifts'])
-        }
-
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 @app.get("/sendgift")
 async def send_telegram_gift(gift_id: str, user_id: int):
 
