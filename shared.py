@@ -1,4 +1,5 @@
 # Общие переменные
+referral_users = {}
 paid_users = {}
 user_inventory = {}
 gifts = [

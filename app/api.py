@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from starlette.responses import JSONResponse
 
 from bot.bot import bot
-from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts
+from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users
 import random
 import logging
 
@@ -69,6 +69,7 @@ async def subscribe_referral(user_id: int):
         chat_member = await bot.get_chat_member(chat_id="@tgiftstestdev", user_id=user_id)
 
         if chat_member.status in ['member', 'administrator', 'creator']:
+            referral_users.add(user_id)
             return {"status": "subscribed"}
 
         else:
@@ -79,7 +80,9 @@ async def subscribe_referral(user_id: int):
 
         return {"status": "error", "details": str(e)}
 
-
+@app.post("/referral_spin")
+async def referral_spin(user_id: int):
+    return
 
 # Проверка инвентаря
 @app.get("/inventory_check")
