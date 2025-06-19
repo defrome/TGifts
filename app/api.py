@@ -82,7 +82,13 @@ async def subscribe_referral(user_id: int):
 
 @app.post("/referral_spin")
 async def referral_spin(user_id: int):
-    return
+    if user_id not in referral_users:
+        raise HTTPException(status_code=400, detail="Вы не прошли задания в реферальной системе")
+
+    else:
+        await init_user(user_id)
+
+
 
 # Проверка инвентаря
 @app.get("/inventory_check")
