@@ -70,6 +70,7 @@ async def subscribe_referral(user_id: int):
         chat_member = await bot.get_chat_member(chat_id="@tgiftstestdev", user_id=user_id)
 
         if chat_member.status in ['member', 'administrator', 'creator']:
+            referral_users.add(user_id)
             return {"status": "subscribed"}
 
         else:
@@ -83,7 +84,7 @@ async def subscribe_referral(user_id: int):
 @app.post("/referral_spin")
 async def referral_spin(user_id: int):
     if user_id not in referral_users:
-        raise HTTPException(status_code=400, detail="Вы не прошли задания в реферальной системе")
+        raise HTTPException(status_code=400, detail="Вы не прошли задания в реферальной системе или ваши реферальные бонусы закончились")
 
     else:
         await init_user(user_id)
@@ -94,7 +95,7 @@ async def referral_spin(user_id: int):
         user_inventory[user_id]['gifts'].append(gift_id)
 
         # Безопасно удаляем пользователя из списка прошедших реферальную систему
-        referral_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+        referral_users.remove(user_id)  # Не вызовет ошибку, если user_id нет
 
         return {"telegram_gift_id": gift_id['telegram_id'],
                 "gift_id": gift_id['gift_id'],

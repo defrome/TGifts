@@ -1,5 +1,5 @@
 # Общие переменные
-referral_users = {}
+referral_users = set()
 paid_users = {}
 user_inventory = {}
 gifts = [
