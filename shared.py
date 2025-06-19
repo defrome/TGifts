@@ -30,6 +30,13 @@ spin_gifts = [
     {"id": "6028601630662853006", "img": "https://i.ibb.co/9mpvjS0m/shampane.png", "name": "shampane", "value": "50", "rarity": "epic", "probability": "1.21"}
 ]
 
+referral_gifts = [
+    {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_path": "https://i.ibb.co/83crdxt/heart.png", "star": 15},
+    {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸", "image_path": "https://i.ibb.co/MyYTrssS/bear.png", "star": 15},
+    {"telegram_id": "6028601630662853006", "gift_id": "11", "emoji": "🍾", "image_path": "https://i.ibb.co/9mpvjS0m/shampane.png", "star": 50},
+    {"telegram_id": "5170250947678437525", "gift_id": "3", "emoji": "🎁", "image_path": "https://i.ibb.co/9HbdKTST/gift.png", "star": 25},
+]
+
 async def init_user(user_id: int):
     if user_id not in user_inventory:
         user_inventory[user_id] = {'gifts': []}
