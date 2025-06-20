@@ -94,6 +94,7 @@ async def process_refund(message: Message):
     finally:
         await message.delete()
 
+
 @app.get("/payment")
 async def create_invoice_link_bot():
     payment_link = await bot.create_invoice_link(
