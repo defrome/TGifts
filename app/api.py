@@ -1,6 +1,6 @@
 import os
 
-from aiogram.types import LabeledPrice, MessageEntity
+from aiogram.types import LabeledPrice, MessageEntity, Update
 from fastapi import FastAPI, HTTPException
 from starlette.responses import JSONResponse
 
@@ -195,6 +195,13 @@ async def roulette_spin(user_id: int):
             detail=f"Spin failed: {str(e)}"
         )
 
+@app.post("/payment_handler")
+async def handle_payment(update: Update):
+    if update.message and update.message.successful_payment:
+        user_id = update.message.from_user.id
+        paid_users.add(user_id)
+        await bot.send_message(user_id, "✅ Платеж успешно получен! Теперь вы можете крутить рулетку.")
+    return {"status": "ok"}
 
 # Проверка статуса оплаты
 @app.get("/status")
