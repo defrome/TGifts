@@ -2,22 +2,20 @@ import asyncio
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
-from app.api import router
 from bot.bot import bot, dp
+from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
+from app.api import app as fastapi_app, app
 import logging
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+origins = ["*"]
 
-app.include_router(router)
-
-# Настройки CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,21 +23,15 @@ app.add_middleware(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 Starting application")
+    logger.info("🚀 Запуск приложения")
     yield
-    logger.info("👋 Shutting down")
-    await bot.session.close()
+    logger.info("👋 Завершение работы")
 
 async def start_bot():
-    from bot import handlers  # Импорт обработчиков после инициализации
     await dp.start_polling(bot)
 
 async def start_fastapi():
-    config = uvicorn.Config(
-        app,
-        host="localhost",
-        port=8001,
-    )
+    config = uvicorn.Config(fastapi_app, host="localhost", port=8001)
     server = uvicorn.Server(config)
     await server.serve()
 

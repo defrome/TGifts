@@ -1,20 +1,15 @@
-from aiogram import types, F, Router
+from aiogram import types
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import CommandStart, Command
 from aiogram.methods import RefundStarPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo, PreCheckoutQuery, Message
-
-
-from app.core import app
-from bot.bot import bot, dp
+from bot.bot import bot, dp, router
 from shared import paid_users
 import os
 import logging
 
 logger = logging.getLogger(__name__)
-
-router = Router()
 
 # Команда /start
 @dp.message(CommandStart())
@@ -55,27 +50,6 @@ async def check_payment_status(message: types.Message):
         await message.reply("Вы еще не оплатили.")
 
 
-@dp.message(F.successful_payment)
-async def handle_successful_payment(message: types.Message):
-    user_id = message.from_user.id
-    payment_data = message.successful_payment
-
-    # Сохраняем полную информацию о платеже
-    paid_users.update(user_id)
-
-    logger.info(f"Successful payment from {user_id}: {payment_data}")
-    await message.answer("✅ Платеж успешно обработан!")
-
-
-@dp.pre_checkout_query()
-async def pre_checkout_handler(pre_checkout: types.PreCheckoutQuery):
-    await pre_checkout.answer(ok=True)
-    logger.info(f"Pre-checkout approved for {pre_checkout.from_user.id}")
-
-
-# Добавьте этот хендлер для вебхуко
-
-
 @dp.message(Command("refund"))
 async def process_refund(message: Message):
     parts = message.text.split()
@@ -94,5 +68,3 @@ async def process_refund(message: Message):
         await message.answer(f"Ошибка возврата: {str(e)}")
     finally:
         await message.delete()
-
-
