@@ -3,7 +3,7 @@ import os
 from aiogram.types import LabeledPrice, MessageEntity
 from fastapi import FastAPI, HTTPException, APIRouter
 from starlette.responses import JSONResponse
-
+from main import app
 from bot.bot import bot
 from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, \
     referral_gifts
@@ -12,7 +12,7 @@ import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-app = FastAPI()
+
 
 @app.get("/payment")
 async def create_invoice_link_bot():
