@@ -1,6 +1,6 @@
 # Общие переменные
 referral_users = set()
-paid_users = {}
+
 user_inventory = {}
 gifts = [
     {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_path": "https://i.ibb.co/83crdxt/heart.png", "star": 15},

@@ -5,9 +5,10 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from bot.bot import bot, dp
-from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
+from app.api import process_refund, check_payment_status, on_message, on_pre_checkout
 from app.api import app as fastapi_app, app
 import logging
+
 
 logger = logging.getLogger(__name__)
 
