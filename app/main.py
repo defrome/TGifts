@@ -11,16 +11,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("🚀 Запуск приложения")
