@@ -61,13 +61,7 @@ async def handle_successful_payment(message: types.Message):
     payment_data = message.successful_payment
 
     # Сохраняем полную информацию о платеже
-    paid_users[user_id] = {
-        'charge_id': payment_data.telegram_payment_charge_id,
-        'amount': payment_data.total_amount,
-        'currency': payment_data.currency,
-        'payload': payment_data.invoice_payload,
-        'paid': True
-    }
+    paid_users.update(user_id)
 
     logger.info(f"Successful payment from {user_id}: {payment_data}")
     await message.answer("✅ Платеж успешно обработан!")
@@ -79,17 +73,8 @@ async def pre_checkout_handler(pre_checkout: types.PreCheckoutQuery):
     logger.info(f"Pre-checkout approved for {pre_checkout.from_user.id}")
 
 
-# Добавьте этот хендлер для вебхуков
-@app.post("/webhook")
-async def bot_webhook(update: dict):
-    try:
-        if 'message' in update and 'successful_payment' in update['message']:
-            message = types.Message(**update['message'])
-            await handle_successful_payment(message)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return {"status": "error"}
+# Добавьте этот хендлер для вебхуко
+
 
 @dp.message(Command("refund"))
 async def process_refund(message: Message):

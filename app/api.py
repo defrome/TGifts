@@ -1,8 +1,10 @@
+from aiogram import types
 from fastapi import APIRouter, HTTPException
 from aiogram.types import LabeledPrice, MessageEntity
 from starlette.responses import JSONResponse
 
 from bot.bot import bot
+from bot.handlers import handle_successful_payment
 from shared import paid_users, user_inventory, gifts, init_user, referral_users, referral_gifts, spin_gifts, \
     get_user_inventory
 import random
@@ -77,6 +79,17 @@ async def subscribe_referral(user_id: int):
     except Exception as e:
 
         return {"status": "error", "details": str(e)}
+
+@router.post("/webhook")
+async def bot_webhook(update: dict):
+    try:
+        if 'message' in update and 'successful_payment' in update['message']:
+            message = types.Message(**update['message'])
+            await handle_successful_payment(message)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return {"status": "error"}
 
 @router.post("/referral_spin")
 async def referral_spin(user_id: int):
