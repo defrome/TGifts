@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from bot.bot import bot, dp
 from app.api import app as fastapi_app, app
+from app import api
 import logging
 
 logger = logging.getLogger(__name__)
