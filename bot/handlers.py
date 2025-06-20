@@ -1,17 +1,20 @@
-from aiogram import types, F
+from aiogram import types, F, Router
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import CommandStart, Command
 from aiogram.methods import RefundStarPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo, PreCheckoutQuery, Message
 
-from app.main import app
-from bot.bot import bot, dp, router
+
+from app.core import app
+from bot.bot import bot, dp
 from shared import paid_users
 import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+router = Router()
 
 # Команда /start
 @dp.message(CommandStart())
@@ -106,3 +109,5 @@ async def process_refund(message: Message):
         await message.answer(f"Ошибка возврата: {str(e)}")
     finally:
         await message.delete()
+
+

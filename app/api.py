@@ -1,20 +1,30 @@
-import os
-
+from fastapi import APIRouter, HTTPException
 from aiogram.types import LabeledPrice, MessageEntity
-from fastapi import FastAPI, HTTPException, APIRouter
 from starlette.responses import JSONResponse
-from main import app
+
 from bot.bot import bot
-from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, \
-    referral_gifts
+from shared import paid_users, user_inventory, gifts, init_user, referral_users, referral_gifts, spin_gifts, \
+    get_user_inventory
 import random
 import logging
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+@router.get("/payment")
+async def create_invoice_link_bot():
+    payment_link = await bot.create_invoice_link(
+        title="Case",
+        description="1 stars",
+        payload="test_payload",
+        provider_token="",  # Замените на реальный
+        currency="XTR",  # Измените на нужную валюту
+        prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
+    )
+    return {"invoice_link": payment_link}
 
-@app.get("/payment")
+
+@router.get("/payment")
 async def create_invoice_link_bot():
     payment_link = await bot.create_invoice_link(
         title="Case",
@@ -28,13 +38,13 @@ async def create_invoice_link_bot():
     return {"invoice_link": payment_link}
 
 
-@app.get("/get_spin_gifts", response_class=JSONResponse)
+@router.get("/get_spin_gifts", response_class=JSONResponse)
 async def get_spin_gifts():
 
     return spin_gifts
 
 
-@app.get("/sendgift")
+@router.get("/sendgift")
 async def send_telegram_gift(gift_id: str, user_id: int):
 
     # Опциональные параметры
@@ -63,7 +73,7 @@ async def send_telegram_gift(gift_id: str, user_id: int):
     except Exception as e:
         print(f"⚠️ Ошибка: {e}")
 
-@app.post("/referral_subscribe")
+@router.post("/referral_subscribe")
 async def subscribe_referral(user_id: int):
 
     try:
@@ -81,7 +91,7 @@ async def subscribe_referral(user_id: int):
 
         return {"status": "error", "details": str(e)}
 
-@app.post("/referral_spin")
+@router.post("/referral_spin")
 async def referral_spin(user_id: int):
     if user_id not in referral_users:
         raise HTTPException(status_code=400, detail="Вы не прошли задания в реферальной системе или ваши реферальные бонусы закончились")
@@ -106,23 +116,23 @@ async def referral_spin(user_id: int):
 
 
 # Проверка инвентаря
-@app.get("/inventory_check")
+@router.get("/inventory_check")
 async def inventory_check(user_id: int):
     inventory = await get_user_inventory(user_id)
     return {"inventory": inventory}
 
-@app.get("/paid_check")
+@router.get("/paid_check")
 async def paid_check():
     paid = paid_users
     return {"paid_users": paid}
 
-@app.get("/available_gifts")
+@router.get("/available_gifts")
 async def get_available_gifts():
     Gifts = await bot.get_available_gifts()
     return Gifts
 
 # Апгрейд подарка
-@app.post("/upgrade")
+@router.post("/upgrade")
 async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип gift_id на str
     await init_user(user_id)
 
@@ -159,7 +169,7 @@ async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип g
 
 
 # Рулетка
-@app.post("/spin")
+@router.post("/spin")
 async def roulette_spin(user_id: int):
     # Проверяем, что пользователь оплатил
     if user_id not in paid_users:
@@ -195,8 +205,6 @@ async def roulette_spin(user_id: int):
             detail=f"Spin failed: {str(e)}"
         )
 
-
-# Проверка статуса оплаты
 @router.get("/status")
 async def get_payment_status(user_id: int):
     is_paid = user_id in paid_users and paid_users[user_id].get('paid', False)

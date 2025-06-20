@@ -1,8 +1,9 @@
 # Общие переменные
-referral_users = set()
+from typing import Dict, Any
 
-user_inventory = {}
-paid_users = {}
+paid_users: Dict[int, Dict[str, Any]] = {}
+user_inventory: Dict[int, Dict[str, list]] = {}
+referral_users = set()
 gifts = [
     {"telegram_id": "5170145012310081615", "gift_id": "1", "emoji": "💝", "image_path": "https://i.ibb.co/83crdxt/heart.png", "star": 15},
     {"telegram_id": "5170233102089322756", "gift_id": "2", "emoji": "🧸", "image_path": "https://i.ibb.co/MyYTrssS/bear.png", "star": 15},
