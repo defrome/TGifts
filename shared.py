@@ -1,7 +1,18 @@
 # Общие переменные
 from typing import Dict, Any
 
-paid_users = {}
+# shared.py
+paid_users = set()
+
+def mark_user_as_paid(user_id: int):
+    paid_users.add(user_id)
+
+def is_user_paid(user_id: int) -> bool:
+    return user_id in paid_users
+
+def clear_user_payment(user_id: int):
+    paid_users.discard(user_id)  # discard не вызывает ошибку, если нет элемента
+
 user_inventory: Dict[int, Dict[str, list]] = {}
 referral_users = set()
 gifts = [

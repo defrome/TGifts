@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from starlette.responses import JSONResponse
 
 from bot.bot import bot
-from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, \
+from shared import paid_users,is_user_paid,clear_user_payment, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, \
     referral_gifts
 import random
 import logging
@@ -161,8 +161,7 @@ async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип g
 # Рулетка
 @app.post("/spin")
 async def roulette_spin(user_id: int):
-    # Проверяем, что пользователь оплатил
-    if user_id not in paid_users:
+    if not is_user_paid(user_id):
         raise HTTPException(
             status_code=402,
             detail="Payment required. Please pay first."
@@ -180,13 +179,15 @@ async def roulette_spin(user_id: int):
         user_inventory[user_id]['gifts'].append(gift_id)
 
         # Безопасно удаляем пользователя из списка оплативших
-        paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+        clear_user_payment(user_id)
 
-        return {"telegram_gift_id": gift_id['telegram_id'],
-                "gift_id": gift_id['gift_id'],
-                "emoji": gift_id['emoji'],
-                "image_url": gift_id['image_path'],
-                "star": gift_id['star']}
+    return {
+        "telegram_gift_id": gift_id['telegram_id'],
+        "gift_id": gift_id['gift_id'],
+        "emoji": gift_id['emoji'],
+        "image_url": gift_id['image_path'],
+        "star": gift_id['star']
+    }
 
     except Exception as e:
         # В случае ошибки оставляем пользователя в paid_users для повторной попытки
