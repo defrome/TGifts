@@ -16,19 +16,6 @@ async def create_invoice_link_bot():
     payment_link = await bot.create_invoice_link(
         title="Case",
         description="1 stars",
-        payload="test_payload",
-        provider_token="",  # Замените на реальный
-        currency="XTR",  # Измените на нужную валюту
-        prices=[LabeledPrice(label="Кейс с подарками", amount=1)],
-    )
-    return {"invoice_link": payment_link}
-
-
-@router.get("/payment")
-async def create_invoice_link_bot():
-    payment_link = await bot.create_invoice_link(
-        title="Case",
-        description="1 stars",
         payload="{}",
         provider_token="",
         currency="XTR",
