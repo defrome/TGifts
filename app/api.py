@@ -13,7 +13,8 @@ from datetime import datetime
 from aiogram.types import LabeledPrice, MessageEntity
 from fastapi import FastAPI, HTTPException
 from starlette.responses import JSONResponse
-
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 from bot.bot import bot
 from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, \
     referral_gifts
@@ -23,6 +24,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+
+
 
 @dp.pre_checkout_query()
 async def on_pre_checkout(pre_checkout_q: PreCheckoutQuery):
