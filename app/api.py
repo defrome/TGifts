@@ -1,7 +1,7 @@
 import os
 
 from aiogram.types import LabeledPrice, MessageEntity
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from starlette.responses import JSONResponse
 
 from bot.bot import bot
@@ -10,8 +10,8 @@ from shared import paid_users, user_inventory, gifts, init_user, get_user_invent
 import random
 import logging
 
+router = APIRouter()
 logger = logging.getLogger(__name__)
-
 app = FastAPI()
 
 @app.get("/payment")
@@ -197,7 +197,8 @@ async def roulette_spin(user_id: int):
 
 
 # Проверка статуса оплаты
-@app.get("/status")
+@router.get("/status")
 async def get_payment_status(user_id: int):
-    logger.info(f"Запрос статуса от user_id={user_id}")
-    return {"paid": user_id in paid_users}
+    is_paid = user_id in paid_users and paid_users[user_id].get('paid', False)
+    logger.info(f"Payment status for {user_id}: {is_paid}")
+    return {"paid": is_paid}
