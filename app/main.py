@@ -2,9 +2,10 @@ import asyncio
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from bot.bot import bot, dp
 from bot.handlers import router as bot_router
+from bot import handlers
 from app.api import router as api_router
 import logging
 

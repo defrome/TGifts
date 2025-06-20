@@ -1,9 +1,11 @@
-from aiogram import types
+from aiogram import types, F
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import CommandStart, Command
 from aiogram.methods import RefundStarPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo, PreCheckoutQuery, Message
+
+from app.main import app
 from bot.bot import bot, dp, router
 from shared import paid_users
 import os
@@ -49,6 +51,42 @@ async def check_payment_status(message: types.Message):
     else:
         await message.reply("Вы еще не оплатили.")
 
+
+@dp.message(F.successful_payment)
+async def handle_successful_payment(message: types.Message):
+    user_id = message.from_user.id
+    payment_data = message.successful_payment
+
+    # Сохраняем полную информацию о платеже
+    paid_users[user_id] = {
+        'charge_id': payment_data.telegram_payment_charge_id,
+        'amount': payment_data.total_amount,
+        'currency': payment_data.currency,
+        'payload': payment_data.invoice_payload,
+        'paid': True
+    }
+
+    logger.info(f"Successful payment from {user_id}: {payment_data}")
+    await message.answer("✅ Платеж успешно обработан!")
+
+
+@dp.pre_checkout_query()
+async def pre_checkout_handler(pre_checkout: types.PreCheckoutQuery):
+    await pre_checkout.answer(ok=True)
+    logger.info(f"Pre-checkout approved for {pre_checkout.from_user.id}")
+
+
+# Добавьте этот хендлер для вебхуков
+@app.post("/webhook")
+async def bot_webhook(update: dict):
+    try:
+        if 'message' in update and 'successful_payment' in update['message']:
+            message = types.Message(**update['message'])
+            await handle_successful_payment(message)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return {"status": "error"}
 
 @dp.message(Command("refund"))
 async def process_refund(message: Message):
