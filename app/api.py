@@ -1,5 +1,6 @@
 import os
 
+from aiogram import types
 from aiogram.types import LabeledPrice, MessageEntity, Update
 from fastapi import FastAPI, HTTPException
 from starlette.responses import JSONResponse
@@ -13,6 +14,41 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def on_startup():
+    webhook_url = f"https://tgifts.space/webhook"
+    await bot.set_webhook(
+        url=webhook_url,
+    )
+    logger.info("Бот запущен, вебхук установлен")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    await bot.delete_webhook()
+    logger.info("off")
+
+
+@app.post("/webhook")
+async def handle_webhook(update: dict):
+    try:
+        telegram_update = types.Update(**update)
+
+        if telegram_update.message and telegram_update.message.successful_payment:
+            user_id = telegram_update.message.from_user.id
+            paid_users.add(user_id)
+            logger.info(f"Пользователь {user_id} успешно оплатил")
+
+            await bot.send_message(
+                chat_id=user_id,
+                text="✅ Платеж успешно получен! Теперь вы можете крутить рулетку."
+            )
+
+        return {"status": "ok"}
+
+    except Exception as e:
+        logger.error(f"Ошибка обработки вебхука: {e}")
+        raise HTTPException(status_code=400, detail="Invalid update data")
 
 @app.get("/payment")
 async def create_invoice_link_bot():
@@ -200,6 +236,7 @@ async def handle_payment(update: Update):
     if update.message and update.message.successful_payment:
         user_id = update.message.from_user.id
         paid_users.add(user_id)
+        logger.info(f"Пользователь {user_id} успешно оплатил")
         await bot.send_message(user_id, "✅ Платеж успешно получен! Теперь вы можете крутить рулетку.")
     return {"status": "ok"}
 
