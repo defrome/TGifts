@@ -1,51 +1,7 @@
 # Общие переменные
 from typing import Dict, Any
 
-# shared.py
-import json
-import pathlib
-from typing import Dict, Optional
-
-
-import json
-import pathlib
-from typing import Dict, Optional
-
-class JSONStorage:
-    def __init__(self, file_path: str):
-        self.file_path = pathlib.Path(file_path)
-        self.data = self._load()
-
-    def _load(self) -> Dict[str, str]:
-        if self.file_path.exists():
-            with open(self.file_path, 'r') as f:
-                return json.load(f)
-        return {}
-
-    def save(self):
-        with open(self.file_path, 'w') as f:
-            json.dump(self.data, f)
-
-    def get(self, user_id: int) -> Optional[str]:
-        return self.data.get(str(user_id))
-
-    def set(self, user_id: int, value: str):
-        self.data[str(user_id)] = value
-        self.save()
-
-
-# Инициализация
-paid_users = JSONStorage()
-
-def mark_user_as_paid(user_id: int):
-    paid_users.add(user_id)
-
-def is_user_paid(user_id: int) -> bool:
-    return user_id in paid_users
-
-def clear_user_payment(user_id: int):
-    paid_users.discard(user_id)  # discard не вызывает ошибку, если нет элемента
-
+paid_users = {}
 user_inventory: Dict[int, Dict[str, list]] = {}
 referral_users = set()
 gifts = [
