@@ -56,4 +56,4 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SERVER_CERT }}
           script_stop: true
-          script: bash /TGifts/deploy.sh
+          script: bash ~/TGifts/deploy.sh
