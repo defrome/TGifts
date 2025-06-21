@@ -35,7 +35,7 @@ async def start_bot():
     await dp.start_polling(bot)
 
 async def start_fastapi():
-    config = uvicorn.Config(fastapi_app, host="0.0.0.0", port=8001)
+    config = uvicorn.Config(fastapi_app, host="localhost", port=8001)
     server = uvicorn.Server(config)
     await server.serve()
 
