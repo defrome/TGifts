@@ -1,40 +1,30 @@
 # Dockerfile
+# enable BuildKit secrets support
+# syntax=docker/dockerfile:1.4
+
 FROM python:3.11-slim AS builder
-
-# Build-time args
-ARG GIT_TOKEN
-ARG CERT_PEM_B64
-ARG KEY_PEM_B64
-
 WORKDIR /TGifts
 
-# Clone private repo
-RUN apt-get update \
- && apt-get install -y --no-install-recommends git \
- && rm -rf /var/lib/apt/lists/* \
- && git clone https://${GIT_TOKEN}@github.com/defrome/TGifts.git . \
- && unset GIT_TOKEN
+# copy source (checked out by GitHub Actions)
+COPY . .
 
-# Decode certificates
-RUN mkdir -p /certs \
- && echo "${CERT_PEM_B64}" | base64 -d > /certs/cert.pem \
- && echo "${KEY_PEM_B64}"  | base64 -d > /certs/key.pem
+# decode and write certs via BuildKit secrets
+RUN --mount=type=secret,id=backend_cert \
+    --mount=type=secret,id=backend_key \
+    mkdir -p /certs && \
+    cat /run/secrets/backend_cert | base64 -d > /certs/cert.pem && \
+    cat /run/secrets/backend_key  | base64 -d > /certs/key.pem
 
-# Install Python dependencies
+# install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Final image
 FROM python:3.11-slim
-
 WORKDIR /TGifts
 
-# Copy application + certs from builder
+# copy app and certs from builder
 COPY --from=builder /TGifts /TGifts
 COPY --from=builder /certs /certs
 
 EXPOSE 443
-
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", "--port", "443", \
-     "--ssl-keyfile", "/certs/key.pem", \
-     "--ssl-certfile", "/certs/cert.pem"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", \
+     "--ssl-keyfile", "/certs/key.pem", "--ssl-certfile", "/certs/cert.pem"]
