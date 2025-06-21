@@ -6,10 +6,15 @@ import json
 import pathlib
 from typing import Dict, Optional
 
+# Определяем корневую директорию проекта и папку для данных
+BASE_DIR = pathlib.Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR.parent / "data"
+DATA_DIR.mkdir(exist_ok=True)
+
 
 class JSONStorage:
     def __init__(self, file_path: str = "paid_users.json"):
-        self.file_path = pathlib.Path(file_path).absolute()
+        self.file_path = DATA_DIR / file_path
         print(f"Инициализация хранилища по пути: {self.file_path}")
         self.data: Dict[str, str] = self._load_or_create()
 
@@ -48,15 +53,6 @@ class JSONStorage:
 
 # Инициализация
 paid_users = JSONStorage()
-
-def mark_user_as_paid(user_id: int):
-    paid_users.add(user_id)
-
-def is_user_paid(user_id: int) -> bool:
-    return user_id in paid_users
-
-def clear_user_payment(user_id: int):
-    paid_users.discard(user_id)  # discard не вызывает ошибку, если нет элемента
 
 user_inventory: Dict[int, Dict[str, list]] = {}
 referral_users = set()
