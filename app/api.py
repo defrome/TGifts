@@ -121,7 +121,7 @@ async def upgrade_gift(gift_id: str, user_id: int):
     user_gifts.remove(gift_to_upgrade)
     new_gift = random.choice(gifts)
     user_gifts.append(new_gift)
-
+    ##
     return {
         "new_telegram_id": new_gift['telegram_id'],
         "new_gift_id": new_gift['gift_id'],
