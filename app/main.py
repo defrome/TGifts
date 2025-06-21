@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from bot.bot import bot, dp
 from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
-from app.api import app  # Импортируем только один экземпляр app
+from app.api import app
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,11 @@ origins = ["*"]
 async def lifespan(app: FastAPI):
     logger.info("🚀 Запуск приложения")
     # Запускаем бота в фоне
-    asyncio.create_task(start_bot())
+    asyncio.create_task(run_polling())
     yield
     logger.info("👋 Завершение работы")
     await bot.session.close()
 
-# Добавляем lifespan в импортированное app
 app.lifespan = lifespan
 
 app.add_middleware(
@@ -37,13 +36,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-async def start_bot():
-    """Запуск long polling бота"""
+async def run_polling():
+    """Запуск long polling бота с обработкой ошибок"""
     try:
         logger.info("Starting bot polling...")
-        await dp.start_polling(bot)
+        await dp.start_polling(bot, handle_signals=False)  # Отключаем обработку сигналов для FastAPI
     except Exception as e:
         logger.error(f"Bot polling error: {e}")
+        # Перезапуск при ошибке
+        await asyncio.sleep(5)
+        asyncio.create_task(run_polling())
     finally:
         logger.info("Bot polling stopped")
 
