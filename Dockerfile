@@ -8,7 +8,7 @@ ENV GIT_TOKEN=${GIT_TOKEN}
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git \
  && rm -rf /var/lib/apt/lists/* \
- && git clone https://${GIT_TOKEN}@github.com/defrome/TGifts.git . \
+ && git clone https://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@github.com/defrome/TGifts.git . \
  && unset GIT_TOKEN
 
 COPY certs/*.pem /certs/
