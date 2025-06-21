@@ -11,7 +11,7 @@ RUN apt-get update \
  && git clone https://${GIT_TOKEN}@github.com/defrome/TGifts.git . \
  && unset GIT_TOKEN
  
-COPY certs/*.pem /certs/
+COPY certs/cert.pem certs/key.pem /certs/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
