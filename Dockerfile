@@ -10,8 +10,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && git clone https://${GIT_TOKEN}@github.com/defrome/TGifts.git . \
  && unset GIT_TOKEN
-
-COPY cert.pem key.pem /certs/
+ 
+COPY certs/*.pem /certs/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
