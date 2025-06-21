@@ -10,7 +10,7 @@ from bot.bot import bot
 from shared import (
     is_user_paid, clear_user_payment, mark_user_as_paid,
     user_inventory, gifts, init_user, get_user_inventory,
-    spin_gifts, referral_users, referral_gifts
+    spin_gifts, referral_users, referral_gifts, paid_users
 )
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ async def inventory_check(user_id: int):
 
 @app.get("/paid_check")
 async def paid_check():
-    return {"paid_users": list(referral_users)}
+    return {"paid_users": paid_users}
 
 
 @app.get("/available_gifts")
