@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from bot.bot import bot, dp
 from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
-from app.api import app as fastapi_app, app
+from app.api import app  # Импортируем только один экземпляр app
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,8 @@ async def lifespan(app: FastAPI):
     logger.info("👋 Завершение работы")
     await bot.session.close()
 
-app = FastAPI(lifespan=lifespan)
+# Добавляем lifespan в импортированное app
+app.lifespan = lifespan
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,15 +47,5 @@ async def start_bot():
     finally:
         logger.info("Bot polling stopped")
 
-async def start_fastapi():
-    """Запуск FastAPI сервера"""
-    config = uvicorn.Config(fastapi_app, host="0.0.0.0", port=8000)  # Изменил порт на 8000
-    server = uvicorn.Server(config)
-    await server.serve()
-
-async def main():
-    """Основная функция запуска"""
-    await start_fastapi()  # Запускаем только FastAPI, бот запускается через lifespan
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    uvicorn.run(app, host="0.0.0.0", port=8000)
