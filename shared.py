@@ -7,43 +7,31 @@ import pathlib
 from typing import Dict, Optional
 
 
+import json
+import pathlib
+from typing import Dict, Optional
+
 class JSONStorage:
-    def __init__(self, file_path: str = "paid_users.json"):
-        self.file_path = pathlib.Path(file_path).absolute()
-        print(f"Инициализация хранилища по пути: {self.file_path}")
-        self.data: Dict[str, str] = self._load_or_create()
+    def __init__(self, file_path: str):
+        self.file_path = pathlib.Path(file_path)
+        self.data = self._load()
 
-    def _load_or_create(self) -> Dict[str, str]:
-        try:
-            if not self.file_path.exists():
-                print("Файл не существует, создаём новый")
-                self._save_data({})
-                return {}
-
-            with open(self.file_path, "r", encoding="utf-8") as f:
-                print("Загружаем существующие данные")
+    def _load(self) -> Dict[str, str]:
+        if self.file_path.exists():
+            with open(self.file_path, 'r') as f:
                 return json.load(f)
-        except Exception as e:
-            print(f"Ошибка загрузки данных: {e}")
-            return {}
+        return {}
 
-    def _save_data(self, data: dict):
-        try:
-            with open(self.file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            print("Данные успешно сохранены")
-        except Exception as e:
-            print(f"Ошибка сохранения: {e}")
+    def save(self):
+        with open(self.file_path, 'w') as f:
+            json.dump(self.data, f)
 
-    def __setitem__(self, user_id: int, value: str):
-        self.data[str(user_id)] = value
-        self._save_data(self.data)
-
-    def __getitem__(self, user_id: int) -> Optional[str]:
+    def get(self, user_id: int) -> Optional[str]:
         return self.data.get(str(user_id))
 
-    def __contains__(self, user_id: int) -> bool:
-        return str(user_id) in self.data
+    def set(self, user_id: int, value: str):
+        self.data[str(user_id)] = value
+        self.save()
 
 
 # Инициализация
