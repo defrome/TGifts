@@ -19,6 +19,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v4
@@ -37,7 +40,6 @@ jobs:
           push: true
           no-cache: true
           secrets: |
-            git_token=${{ secrets.GIT_TOKEN }}
             backend_cert=${{ secrets.BACKEND_CERT }}
             backend_key=${{ secrets.BACKEND_KEY }}
           tags: ${{ steps.meta.outputs.tags }}
