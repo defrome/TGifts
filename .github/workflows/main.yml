@@ -37,6 +37,7 @@ jobs:
           context: .
           file: Dockerfile 
           push: true
+          no-cache: true
           build-args: |
             GIT_TOKEN=${{ secrets.GIT_TOKEN }}
           tags: ${{ steps.meta.outputs.tags }}
