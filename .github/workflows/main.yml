@@ -58,3 +58,10 @@ jobs:
           key: ${{ secrets.SERVER_CERT }}
           script_stop: true
           script: bash /home/devops/TGifts/deploy.sh
+
+      - name: Send Telegram notification on failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot7812896439:AAETecJK74Bl7n8WPX4EzNldIjiA-Qr8gPM/sendMessage \
+          -d chat_id=-1002653645739 \
+          -d text="Workflow failed for repository ${{ github.repository }} on commit ${{ github.sha }}. Check the logs for more details."
