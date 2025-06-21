@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# payment
 @app.get("/payment")
 async def create_invoice_link_bot():
     payment_link = await bot.create_invoice_link(
