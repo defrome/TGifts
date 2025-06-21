@@ -13,6 +13,8 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY certs/*.pem /certs/
+
 EXPOSE 443
 
 CMD ["uvicorn", "app.main:app", \
