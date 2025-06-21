@@ -1,6 +1,6 @@
 from aiogram import types
 from aiogram.exceptions import TelegramAPIError
-from aiogram.filters import CommandStart, Command, SuccessfulPayment
+from aiogram.filters import CommandStart, Command
 from aiogram.methods import RefundStarPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo, PreCheckoutQuery, Message
@@ -36,7 +36,7 @@ async def get_paid_bot(message: types.Message):
     paid = paid_users
     await message.reply(paid)
 
-@router.message(SuccessfulPayment())
+@router.message()
 async def on_message(msg: types.Message):
     if msg.successful_payment:
         user_id = msg.from_user.id
