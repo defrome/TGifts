@@ -1,3 +1,4 @@
+# .github/workflows/main.yml
 name: CI/CD
 
 on:
@@ -23,10 +24,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ secrets.DOCKER_USERNAME }}/tgifts
-          tags: |
-            type=ref,event=branch
-          labels: |
-            org.opencontainers.image.source=https://github.com/defrome/TGifts
+          tags: latest
+          labels: latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -34,18 +33,18 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          # no-cache: true 
+          no-cache: true
           build-args: |
             GIT_TOKEN=${{ secrets.GIT_TOKEN }}
-            CERT_PEM_B64=${{ secrets.BACKEND_CERT }}
-            KEY_PEM_B64=${{ secrets.BACKEND_KEY }}
+            CERT_PEM_B64=${{ secrets.CERT_PEM_B64 }}
+            KEY_PEM_B64=${{ secrets.KEY_PEM_B64 }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
   server_update:
     name: Deploy to server via SSH
-    runs-on: ubuntu-latest
     needs: push_to_registry
+    runs-on: ubuntu-latest
 
     steps:
       - name: Run remote deploy script
