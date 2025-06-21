@@ -2,7 +2,52 @@
 from typing import Dict, Any
 
 # shared.py
-paid_users = set()
+import json
+import pathlib
+from typing import Dict, Optional
+
+
+class JSONStorage:
+    def __init__(self, file_path: str = "paid_users.json"):
+        self.file_path = pathlib.Path(file_path).absolute()
+        print(f"Инициализация хранилища по пути: {self.file_path}")
+        self.data: Dict[str, str] = self._load_or_create()
+
+    def _load_or_create(self) -> Dict[str, str]:
+        try:
+            if not self.file_path.exists():
+                print("Файл не существует, создаём новый")
+                self._save_data({})
+                return {}
+
+            with open(self.file_path, "r", encoding="utf-8") as f:
+                print("Загружаем существующие данные")
+                return json.load(f)
+        except Exception as e:
+            print(f"Ошибка загрузки данных: {e}")
+            return {}
+
+    def _save_data(self, data: dict):
+        try:
+            with open(self.file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            print("Данные успешно сохранены")
+        except Exception as e:
+            print(f"Ошибка сохранения: {e}")
+
+    def __setitem__(self, user_id: int, value: str):
+        self.data[str(user_id)] = value
+        self._save_data(self.data)
+
+    def __getitem__(self, user_id: int) -> Optional[str]:
+        return self.data.get(str(user_id))
+
+    def __contains__(self, user_id: int) -> bool:
+        return str(user_id) in self.data
+
+
+# Инициализация
+paid_users = JSONStorage()
 
 def mark_user_as_paid(user_id: int):
     paid_users.add(user_id)
