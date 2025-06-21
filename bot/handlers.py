@@ -30,6 +30,7 @@ async def on_pre_checkout(pre_checkout_q: PreCheckoutQuery):
     logger.info(f"pre_checkout_query от user_id={pre_checkout_q.from_user.id}")
     await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
 
+# проверяем оплату в боте
 @dp.message(Command('paid'))
 async def get_paid_bot(message: types.Message):
     paid = paid_users
