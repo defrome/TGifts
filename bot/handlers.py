@@ -5,9 +5,10 @@ from aiogram.methods import RefundStarPayment
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import WebAppInfo, PreCheckoutQuery, Message
 from bot.bot import bot, dp, router
-from shared import paid_users
 import os
 import logging
+
+paid_users = {}
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,6 @@
 # Общие переменные
 from typing import Dict, Any
 
-paid_users = {}
 user_inventory: Dict[int, Dict[str, list]] = {}
 referral_users = set()
 gifts = [

@@ -2,8 +2,9 @@ from aiogram.types import LabeledPrice, MessageEntity
 from fastapi import APIRouter, HTTPException  # Используем APIRouter вместо FastAPI
 from starlette.responses import JSONResponse
 from bot.bot import bot
-from shared import paid_users, user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, referral_gifts
+from shared import user_inventory, gifts, init_user, get_user_inventory, spin_gifts, referral_users, referral_gifts
 import random
+from bot.handlers import paid_users
 import logging
 
 logger = logging.getLogger(__name__)
