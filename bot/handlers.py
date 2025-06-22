@@ -30,6 +30,7 @@ async def on_pre_checkout(pre_checkout_q: PreCheckoutQuery):
     logger.info(f"pre_checkout_query от user_id={pre_checkout_q.from_user.id}")
     await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
 
+
 @router.message()
 async def on_message(msg: types.Message):
     if msg.successful_payment:
@@ -44,7 +45,7 @@ async def check_payment_status(message: types.Message):
     user_id = message.from_user.id
     logger.info(f"/status от user_id={user_id}")
     if user_id in paid_users:
-        await message.reply(f"Вы оплатилиdsfsdf. {paid_users}")
+        await message.reply("Вы оплатили.")
     else:
         await message.reply("Вы еще не оплатили.")
 

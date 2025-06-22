@@ -3,30 +3,16 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from bot.bot import bot, dp
-from bot.handlers import command_start_handler, on_pre_checkout, on_message, check_payment_status, process_refund
-from app.api import app
 import logging
-
+from bot.bot import bot, dp
+from bot import handlers
 logger = logging.getLogger(__name__)
 
+# Создаем основной экземпляр FastAPI
+app = FastAPI()
+
+# Настройки CORS
 origins = ["*"]
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("🚀 Запуск приложения")
-    # Запускаем бота в фоне
-    asyncio.create_task(run_polling())
-    yield
-    logger.info("👋 Завершение работы")
-    await bot.session.close()
-
-app.lifespan = lifespan
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,19 +22,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-async def run_polling():
-    """Запуск long polling бота с обработкой ошибок"""
-    try:
-        logger.info("Starting bot polling...")
-        await dp.start_polling(bot, handle_signals=False)  # Отключаем обработку сигналов для FastAPI
-    except Exception as e:
-        logger.error(f"Bot polling error: {e}")
-        # Перезапуск при ошибке
-        await asyncio.sleep(5)
-        asyncio.create_task(run_polling())
-    finally:
-        logger.info("Bot polling stopped")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("🚀 Запуск приложения")
+    yield
+    logger.info("👋 Завершение работы")
+
+
+async def start_bot():  # Ленивый импорт
+    await dp.start_polling(bot)
+
+
+async def start_fastapi():
+    from app.api import router as api_router  # Импортируем роутер, а не app
+
+    # Включаем роутеры в основное приложение
+    app.include_router(api_router, prefix="/api", tags=["API"])
+
+    config = uvicorn.Config(app, host="localhost", port=8000)
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+async def main():
+    await asyncio.gather(start_bot(), start_fastapi())
+
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    asyncio.run(main())
