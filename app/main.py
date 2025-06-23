@@ -75,14 +75,73 @@ async def create_invoice_link_bot():
    return {"payment_link": payment_link}
 
 
+from fastapi.responses import JSONResponse
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 @app.post("/webhook")
 async def handle_webhook(request: Request):
-    """Обработчик вебхука"""
-    update = await request.json()
-    if payment := update.get("message", {}).get("successful_payment"):
-        print(f"💳 Получен платеж: {payment}")
-        return payment
-    await dp.feed_update(bot, Update.model_validate(update, context={"bot": bot}))
+    """Улучшенный обработчик вебхука с полной диагностикой"""
+    try:
+        # 1. Логируем входящий запрос
+        body = await request.body()
+        logger.info(f"📨 Входящий запрос: {body.decode()}")
+
+        # 2. Парсим JSON
+        try:
+            update_data = await request.json()
+        except Exception as e:
+            logger.error(f"❌ Ошибка парсинга JSON: {e}")
+            return JSONResponse(
+                content={"status": "error", "detail": "Invalid JSON"},
+                status_code=400
+            )
+
+        # 3. Валидируем структуру обновления
+        if not isinstance(update_data, dict):
+            logger.error("⚠️ Неверный формат обновления")
+            return JSONResponse(
+                content={"status": "error", "detail": "Invalid update format"},
+                status_code=400
+            )
+
+        # 4. Обрабатываем платежи
+        if update_data.get("message", {}).get("successful_payment"):
+            payment = update_data["message"]["successful_payment"]
+            logger.info(f"💳 Получен платеж: {payment}")
+
+            # Здесь можно добавить дополнительную обработку платежа
+            return JSONResponse(
+                content={"status": "success", "payment": payment},
+                status_code=200
+            )
+
+        # 5. Пробуем обработать через диспетчер
+        try:
+            update = Update.model_validate(update_data, context={"bot": bot})
+            await dp.feed_update(bot, update)
+            logger.info("🔄 Обновление передано диспетчеру")
+            return JSONResponse(
+                content={"status": "success"},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"⚠️ Ошибка обработки обновления: {e}")
+            return JSONResponse(
+                content={"status": "error", "detail": str(e)},
+                status_code=500
+            )
+
+    except Exception as e:
+        logger.critical(f"🔥 Критическая ошибка: {e}", exc_info=True)
+        return JSONResponse(
+            content={"status": "error", "detail": "Internal server error"},
+            status_code=500
+        )
 
 @app.post("/check_payment")
 async def user_payment_check():
