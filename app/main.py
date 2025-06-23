@@ -61,7 +61,7 @@ async def handle_webhook(request: Request):
         return payment
     await dp.feed_update(bot, Update.model_validate(update, context={"bot": bot}))
 
-
+@app.post("/check_payment")
 async def user_payment_check(user_id: int):
     if user_id in paid_users:
         return {user_id: "payment status: True"}
