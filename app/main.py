@@ -1,51 +1,81 @@
+import os
 import asyncio
-import uvicorn
+from aiogram.types import LabeledPrice, Update
+from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-import logging
-from app.api import router as api_router
-from bot.bot import bot, dp
-from bot import handlers
-logger = logging.getLogger(__name__)
+from aiogram import Router, Dispatcher, Bot, types
+import uvicorn
+from dotenv import load_dotenv
 
-# Создаем основной экземпляр FastAPI
-app = FastAPI()
+load_dotenv()
 
-app.include_router(api_router, prefix="/api", tags=["API"])
 
-# Настройки CORS
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Инициализация бота
+bot = Bot(os.getenv('BOT_TOKEN'))
+router = Router()
+dp = Dispatcher()
+dp.include_router(router)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀 Запуск приложения")
+    # Настройка вебхука
+    url_webhook = "https://tgifts.space/webhook"  # Замените на ваш URL
+    await bot.set_webhook(
+        url=url_webhook,
+        allowed_updates=dp.resolve_used_update_types(),
+        drop_pending_updates=True
+    )
+    print(f"✅ Вебхук установлен на {url_webhook}")
     yield
-    logger.info("👋 Завершение работы")
+    await bot.delete_webhook()
+    print("🛑 Вебхук удален")
 
 
-async def start_bot():  # Ленивый импорт
-    await dp.start_polling(bot)
+app = FastAPI(lifespan=lifespan)
 
 
-async def start_fastapi():
-    config = uvicorn.Config(app, host="localhost", port=8000)
-    server = uvicorn.Server(config)
-    await server.serve()
+@app.get('/payment')
+async def create_invoice_link_bot():
+   payment_link = await bot.create_invoice_link(
+       "Subscription",
+       "100 stars",
+       "{}",
+       "XTR",
+       prices=[LabeledPrice(label="Subscription", amount=1)]
+   )
+   return payment_link
 
 
-async def main():
-    await asyncio.gather(start_bot(), start_fastapi())
+@app.post("/webhook")
+async def handle_webhook(request: Request):
+    """Обработчик вебхука"""
+    update = await request.json()
+    if payment := update.get("message", {}).get("successful_payment"):
+        print(f"💳 Получен платеж: {payment}")
+        return payment
+    await dp.feed_update(bot, Update.model_validate(update, context={"bot": bot}))
+
+
+@router.pre_checkout_query()
+async def pre_checkout_handler(query: types.PreCheckoutQuery):
+    """Подтверждение платежа"""
+    await bot.answer_pre_checkout_query(query.id, ok=True)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Проверка переменных окружения
+    if not os.getenv('BOT_TOKEN'):
+        raise EnvironmentError("❌ Токен бота не найден в переменных окружения")
+
+    # Запуск сервера
+    config = uvicorn.Config(
+        app,
+        host="localhost",
+        port=8000,
+        log_level="info"
+    )
+    server = uvicorn.Server(config)
+
+    print("🚀 Запуск сервера...")
+    asyncio.run(server.serve())
