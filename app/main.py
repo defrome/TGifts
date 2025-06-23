@@ -82,64 +82,66 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
-    """Улучшенный обработчик вебхука с полной диагностикой"""
+    """Обработчик вебхука с четкой обработкой платежей"""
     try:
-        # 1. Логируем входящий запрос
-        body = await request.body()
-        logger.info(f"📨 Входящий запрос: {body.decode()}")
+        # Получаем сырые данные запроса
+        raw_body = await request.body()
 
-        # 2. Парсим JSON
-        try:
-            update_data = await request.json()
-        except Exception as e:
-            logger.error(f"❌ Ошибка парсинга JSON: {e}")
+        # Проверка на пустой запрос
+        if not raw_body:
             return JSONResponse(
-                content={"status": "error", "detail": "Invalid JSON"},
+                content={"status": "error", "detail": "Empty request body"},
                 status_code=400
             )
 
-        # 3. Валидируем структуру обновления
+        try:
+            # Парсим JSON
+            update_data = await request.json()
+        except Exception as e:
+            return JSONResponse(
+                content={"status": "error", "detail": f"Invalid JSON: {str(e)}"},
+                status_code=400
+            )
+
+        # Проверяем структуру обновления
         if not isinstance(update_data, dict):
-            logger.error("⚠️ Неверный формат обновления")
             return JSONResponse(
                 content={"status": "error", "detail": "Invalid update format"},
                 status_code=400
             )
 
-        # 4. Обрабатываем платежи
+        # Обработка успешного платежа
         if update_data.get("message", {}).get("successful_payment"):
-            payment = update_data["message"]["successful_payment"]
-            logger.info(f"💳 Получен платеж: {payment}")
+            payment_data = update_data["message"]["successful_payment"]
 
-            # Здесь можно добавить дополнительную обработку платежа
-            return JSONResponse(
-                content={"status": "success", "payment": payment},
-                status_code=200
-            )
+            # Добавляем пользователя в paid_users
+            user_id = update_data["message"]["from"]["id"]
+            paid_users[user_id] = {
+                "user_id": user_id
+            }
 
-        # 5. Пробуем обработать через диспетчер
-        try:
-            update = Update.model_validate(update_data, context={"bot": bot})
-            await dp.feed_update(bot, update)
-            logger.info("🔄 Обновление передано диспетчеру")
-            return JSONResponse(
-                content={"status": "success"},
-                status_code=200
-            )
-        except Exception as e:
-            logger.error(f"⚠️ Ошибка обработки обновления: {e}")
-            return JSONResponse(
-                content={"status": "error", "detail": str(e)},
-                status_code=500
-            )
+            # Возвращаем данные платежа
+            return {
+                "status": "success",
+                "payment": payment_data,
+                "user_id": user_id
+            }
+
+        # Если это не платеж, возвращаем ошибку
+        return JSONResponse(
+            content={"status": "error", "detail": "No payment data found"},
+            status_code=400
+        )
 
     except Exception as e:
-        logger.critical(f"🔥 Критическая ошибка: {e}", exc_info=True)
         return JSONResponse(
-            content={"status": "error", "detail": "Internal server error"},
+            content={"status": "error", "detail": f"Internal error: {str(e)}"},
             status_code=500
         )
 
