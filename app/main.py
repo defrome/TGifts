@@ -112,6 +112,11 @@ async def handle_webhook(request: Request):
         # 4. Обрабатываем платежи
         if update_data.get("message", {}).get("successful_payment"):
             payment = update_data["message"]["successful_payment"]
+            user_id = update_data["message"]["from"]["id"]
+
+            paid_users[user_id] = {
+                "user_id": user_id
+            }
             logger.info(f"💳 Получен платеж: {payment}")
 
             # Здесь можно добавить дополнительную обработку платежа
