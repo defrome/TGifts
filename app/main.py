@@ -63,10 +63,7 @@ async def handle_webhook(request: Request):
 
 @app.post("/check_payment")
 async def user_payment_check(user_id: int):
-    if user_id in paid_users:
-        return {user_id: "payment status: True"}
-    else:
-        return {user_id: "payment status: False"}
+    return paid_users
 
 
 @router.pre_checkout_query()
