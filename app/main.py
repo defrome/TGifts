@@ -24,17 +24,40 @@ dp.include_router(router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Настройка вебхука
-    url_webhook = "https://tgifts.space/webhook"  # Замените на ваш URL
-    await bot.set_webhook(
-        url=url_webhook,
-        allowed_updates=dp.resolve_used_update_types(),
-        drop_pending_updates=True
-    )
-    print(f"✅ Вебхук установлен на {url_webhook}")
-    yield
-    await bot.delete_webhook()
-    print("🛑 Вебхук удален")
+    """Контекстный менеджер для управления жизненным циклом вебхука"""
+    try:
+        # Настройка вебхука
+        url_webhook = "https://tgifts.space/webhook"
+
+        # Удаляем предыдущий вебхук (на всякий случай)
+        try:
+            await bot.delete_webhook()
+            print("🔄 Предыдущий вебхук удален")
+        except Exception as e:
+            print(f"⚠️ Ошибка при удалении старого вебхука: {e}")
+
+        # Устанавливаем новый вебхук
+        webhook_info = await bot.set_webhook(
+            url=url_webhook,
+            allowed_updates=dp.resolve_used_update_types(),
+            drop_pending_updates=True,
+        )
+
+        # Проверяем установку вебхука
+        current_webhook = await bot.get_webhook_info()
+        print(f"✅ Вебхук установлен. Текущие настройки: {current_webhook}")
+
+        yield
+
+    except Exception as e:
+        print(f"🔥 Критическая ошибка в lifespan: {e}")
+        raise
+    finally:
+        try:
+            await bot.delete_webhook()
+            print("🛑 Вебхук успешно удален")
+        except Exception as e:
+            print(f"⚠️ Ошибка при удалении вебхука: {e}")
 
 
 app = FastAPI(lifespan=lifespan)
@@ -62,7 +85,7 @@ async def handle_webhook(request: Request):
     await dp.feed_update(bot, Update.model_validate(update, context={"bot": bot}))
 
 @app.post("/check_payment")
-async def user_payment_check(user_id: int):
+async def user_payment_check():
     return paid_users
 
 
