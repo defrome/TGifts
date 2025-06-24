@@ -312,7 +312,14 @@ async def roulette_spin(user_id: int):
 
 @app.get('/user_inventory')
 async def get_user_inventory(user_id: int):
-    return {f"{user_id} inventory": user_inventory[user_id]}
+    if user_id in user_inventory:
+        print(f'Получен инвентарь пользователя {user_id}')
+        return user_inventory[user_id]
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Инвентарь пользователя {user_id} пуст'
+        )
 
 
 @app.get("/status")
