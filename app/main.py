@@ -14,6 +14,8 @@ from contextlib import asynccontextmanager
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 from dotenv import load_dotenv
+from starlette.middleware.cors import CORSMiddleware
+
 from shared import spin_gifts, referral_users, init_user, referral_gifts, user_inventory, gifts
 
 load_dotenv()
@@ -27,7 +29,6 @@ bot = Bot(os.getenv('BOT_TOKEN'))
 router = Router()
 dp = Dispatcher()
 dp.include_router(router)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,6 +69,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get('/payment')
