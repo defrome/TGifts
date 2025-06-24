@@ -1,15 +1,21 @@
 import os
 import asyncio
-
+import random
+from fastapi import HTTPException
+from typing import Dict
+from fastapi.responses import JSONResponse
+import logging
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import Command
 from aiogram.methods import RefundStarPayment
-from aiogram.types import LabeledPrice, Update, Message
+from aiogram.types import LabeledPrice, Update, Message, MessageEntity
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 from dotenv import load_dotenv
+from test import test_roulette_spin
+from shared import spin_gifts, referral_users, init_user, referral_gifts, user_inventory, gifts
 
 load_dotenv()
 
@@ -74,14 +80,9 @@ async def create_invoice_link_bot():
    )
    return {"payment_link": payment_link}
 
-
-from fastapi.responses import JSONResponse
-import logging
-
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
@@ -148,9 +149,170 @@ async def handle_webhook(request: Request):
             status_code=500
         )
 
-@app.post("/check_payment")
-async def user_payment_check():
-    return paid_users
+@app.post("/referral_subscribe")
+async def subscribe_referral(user_id: int):
+
+    try:
+        chat_member = await bot.get_chat_member(chat_id="@tgiftstestdev", user_id=user_id)
+
+        if chat_member.status in ['member', 'administrator', 'creator']:
+            referral_users.add(user_id)
+            return {"status": "subscribed"}
+
+        else:
+            return {"status": "not_subscribed"}
+
+
+    except Exception as e:
+
+        return {"status": "error", "details": str(e)}
+
+
+@app.post("/referral_spin")
+async def referral_spin(user_id: int):
+    if user_id not in referral_users:
+        raise HTTPException(status_code=400, detail="Вы не прошли задания в реферальной системе или ваши реферальные бонусы закончились")
+
+    else:
+        await init_user(user_id)
+
+        gift_id = random.choice(referral_gifts)
+
+        # Добавляем подарок в инвентарь
+        user_inventory[user_id]['gifts'].append(gift_id)
+
+        # Безопасно удаляем пользователя из списка прошедших реферальную систему
+        referral_users.remove(user_id)  # Не вызовет ошибку, если user_id нет
+
+        return {"telegram_gift_id": gift_id['telegram_id'],
+                "gift_id": gift_id['gift_id'],
+                "emoji": gift_id['emoji'],
+                "image_url": gift_id['image_path'],
+                "star": gift_id['star']}
+
+@app.get("/get_spin_gifts", response_class=JSONResponse)
+async def get_spin_gifts():
+
+    return spin_gifts
+
+
+@app.get("/sendgift")
+async def send_telegram_gift(gift_id: str, user_id: int):
+
+    # Опциональные параметры
+    text = "🎁 Тест подарка"
+    text_entities = [
+        MessageEntity(type="bold", offset=0, length=2),  # Жирный смайлик 🎁
+        MessageEntity(type="italic", offset=3, length=8)  # Курсив "подарок"
+    ]
+
+
+    try:
+        # Отправка подарка
+        success = await bot.send_gift(
+            gift_id=gift_id,
+            user_id=user_id,  # ИЛИ chat_id=chat_id,
+            pay_for_upgrade=False,  # Оплатить из баланса бота
+            text=text,
+            text_entities=text_entities,  # ИЛИ text_parse_mode="HTML"
+        )
+
+        if success:
+            print("✅ Подарок успешно отправлен!")
+        else:
+            print("❌ Ошибка при отправке подарка.")
+
+    except Exception as e:
+        print(f"⚠️ Ошибка: {e}")
+
+
+@app.get("/paid_check")
+async def paid_check():
+    paid = paid_users
+    return {"paid_users": paid}
+
+@app.get("/available_gifts")
+async def get_available_gifts():
+    Gifts = await bot.get_available_gifts()
+    return Gifts
+
+# Апгрейд подарка
+@app.post("/upgrade")
+async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип gift_id на str
+    await init_user(user_id)
+
+    # Проверяем наличие подарка в инвентаре
+    user_gifts = user_inventory[user_id]['gifts']
+    gift_to_upgrade = next((g for g in user_gifts if g['gift_id'] == gift_id), None)
+
+    if not gift_to_upgrade:
+        raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
+
+    # Удаляем старый подарок
+    user_gifts.remove(gift_to_upgrade)
+
+    # Выбираем случайный новый подарок (можно добавить логику улучшения)
+    new_gift = random.choice(gifts)
+
+    # Добавляем новый подарок в инвентарь
+    user_gifts.append({
+        "telegram_id": new_gift['telegram_id'],
+        "gift_id": new_gift['gift_id'],
+        "emoji": new_gift['emoji'],
+        "image_path": new_gift['image_path'],
+        "star": new_gift['star']
+    })
+
+    return {
+        "new_telegram_id": new_gift['telegram_id'],
+        "new_gift_id": new_gift['gift_id'],
+        "emoji": new_gift['emoji'],
+        "image_url": new_gift['image_path'],
+        "star": new_gift['star']
+    }
+
+
+@app.post("/spin")
+async def roulette_spin(user_id: int):
+    # Проверяем, что пользователь оплатил
+    if user_id not in paid_users:
+        raise HTTPException(
+            status_code=402,
+            detail="Payment required. Please pay first."
+        )
+
+    try:
+        # Инициализируем пользователя (если еще не инициализирован)
+        await init_user(user_id)
+
+        # Выбираем случайный подарок
+        gift_id = random.choice(gifts)
+
+
+        # Добавляем подарок в инвентарь
+        user_inventory[user_id]['gifts'].append(gift_id)
+
+        # Безопасно удаляем пользователя из списка оплативших
+        paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+
+        return {"telegram_gift_id": gift_id['telegram_id'],
+                "gift_id": gift_id['gift_id'],
+                "emoji": gift_id['emoji'],
+                "image_url": gift_id['image_path'],
+                "star": gift_id['star']}
+
+    except Exception as e:
+        # В случае ошибки оставляем пользователя в paid_users для повторной попытки
+        raise HTTPException(
+            status_code=500,
+            detail=f"Spin failed: {str(e)}"
+        )
+
+
+@app.get("/status")
+async def get_payment_status(user_id: int):
+    logger.info(f"Запрос статуса от user_id={user_id}")
+    return {"paid": user_id in paid_users}
 
 
 @router.pre_checkout_query()
