@@ -18,6 +18,8 @@ from shared import spin_gifts, referral_users, init_user, referral_gifts, user_i
 
 load_dotenv()
 
+# Временная база данных
+
 paid_users = {}
 
 # Инициализация бота
