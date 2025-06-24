@@ -14,7 +14,6 @@ from contextlib import asynccontextmanager
 from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 from dotenv import load_dotenv
-from test import test_roulette_spin
 from shared import spin_gifts, referral_users, init_user, referral_gifts, user_inventory, gifts
 
 load_dotenv()
