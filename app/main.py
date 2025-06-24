@@ -3,6 +3,8 @@ import asyncio
 import random
 from fastapi import HTTPException
 from typing import Dict
+
+from fastapi.params import Depends
 from fastapi.responses import JSONResponse
 import logging
 from aiogram.exceptions import TelegramAPIError
@@ -15,7 +17,6 @@ from aiogram import Router, Dispatcher, Bot, types
 import uvicorn
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-
 from shared import spin_gifts, referral_users, init_user, referral_gifts, user_inventory, gifts
 
 load_dotenv()
@@ -32,6 +33,7 @@ dp.include_router(router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     """Контекстный менеджер для управления жизненным циклом вебхука"""
     try:
         # Настройка вебхука
@@ -82,6 +84,7 @@ app.add_middleware(
 )
 
 
+
 @app.get('/payment')
 async def create_invoice_link_bot():
    payment_link = await bot.create_invoice_link(
@@ -99,13 +102,13 @@ logger = logging.getLogger(__name__)
 
 @app.post("/webhook")
 async def handle_webhook(request: Request):
-    """Улучшенный обработчик вебхука с полной диагностикой"""
+
     try:
-        # 1. Логируем входящий запрос
+
         body = await request.body()
         logger.info(f"📨 Входящий запрос: {body.decode()}")
 
-        # 2. Парсим JSON
+
         try:
             update_data = await request.json()
         except Exception as e:
@@ -115,7 +118,6 @@ async def handle_webhook(request: Request):
                 status_code=400
             )
 
-        # 3. Валидируем структуру обновления
         if not isinstance(update_data, dict):
             logger.error("⚠️ Неверный формат обновления")
             return JSONResponse(
@@ -123,7 +125,7 @@ async def handle_webhook(request: Request):
                 status_code=400
             )
 
-        # 4. Обрабатываем платежи
+
         if update_data.get("message", {}).get("successful_payment"):
             payment = update_data["message"]["successful_payment"]
             user_id = update_data["message"]["from"]["id"]
@@ -131,15 +133,16 @@ async def handle_webhook(request: Request):
             paid_users[user_id] = {
                 "user_id": user_id
             }
+
             logger.info(f"💳 Получен платеж: {payment}")
 
-            # Здесь можно добавить дополнительную обработку платежа
+
             return JSONResponse(
                 content={"status": "success", "payment": payment},
                 status_code=200
             )
 
-        # 5. Пробуем обработать через диспетчер
+
         try:
             update = Update.model_validate(update_data, context={"bot": bot})
             await dp.feed_update(bot, update)
@@ -191,11 +194,11 @@ async def referral_spin(user_id: int):
 
         gift_id = random.choice(referral_gifts)
 
-        # Добавляем подарок в инвентарь
+
         user_inventory[user_id]['gifts'].append(gift_id)
 
-        # Безопасно удаляем пользователя из списка прошедших реферальную систему
-        referral_users.remove(user_id)  # Не вызовет ошибку, если user_id нет
+
+        referral_users.remove(user_id)
 
         return {"telegram_gift_id": gift_id['telegram_id'],
                 "gift_id": gift_id['gift_id'],
@@ -212,22 +215,22 @@ async def get_spin_gifts():
 @app.get("/sendgift")
 async def send_telegram_gift(gift_id: str, user_id: int):
 
-    # Опциональные параметры
+
     text = "🎁 Тест подарка"
     text_entities = [
-        MessageEntity(type="bold", offset=0, length=2),  # Жирный смайлик 🎁
-        MessageEntity(type="italic", offset=3, length=8)  # Курсив "подарок"
+        MessageEntity(type="bold", offset=0, length=2),
+        MessageEntity(type="italic", offset=3, length=8)
     ]
 
 
     try:
-        # Отправка подарка
+
         success = await bot.send_gift(
             gift_id=gift_id,
-            user_id=user_id,  # ИЛИ chat_id=chat_id,
-            pay_for_upgrade=False,  # Оплатить из баланса бота
+            user_id=user_id,
+            pay_for_upgrade=False,
             text=text,
-            text_entities=text_entities,  # ИЛИ text_parse_mode="HTML"
+            text_entities=text_entities,
         )
 
         if success:
@@ -249,25 +252,25 @@ async def get_available_gifts():
     Gifts = await bot.get_available_gifts()
     return Gifts
 
-# Апгрейд подарка
+
 @app.post("/upgrade")
-async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип gift_id на str
+async def upgrade_gift(gift_id: str, user_id: int):
     await init_user(user_id)
 
-    # Проверяем наличие подарка в инвентаре
+
     user_gifts = user_inventory[user_id]['gifts']
     gift_to_upgrade = next((g for g in user_gifts if g['gift_id'] == gift_id), None)
 
     if not gift_to_upgrade:
         raise HTTPException(status_code=400, detail="У вас нет такого подарка в инвентаре")
 
-    # Удаляем старый подарок
+
     user_gifts.remove(gift_to_upgrade)
 
-    # Выбираем случайный новый подарок (можно добавить логику улучшения)
+
     new_gift = random.choice(gifts)
 
-    # Добавляем новый подарок в инвентарь
+
     user_gifts.append({
         "telegram_id": new_gift['telegram_id'],
         "gift_id": new_gift['gift_id'],
@@ -287,7 +290,7 @@ async def upgrade_gift(gift_id: str, user_id: int):  # Изменили тип g
 
 @app.post("/spin")
 async def roulette_spin(user_id: int):
-    # Проверяем, что пользователь оплатил
+
     if user_id not in paid_users:
         raise HTTPException(
             status_code=402,
@@ -295,18 +298,18 @@ async def roulette_spin(user_id: int):
         )
 
     try:
-        # Инициализируем пользователя (если еще не инициализирован)
+
         await init_user(user_id)
 
-        # Выбираем случайный подарок
+
         gift_id = random.choice(gifts)
 
 
-        # Добавляем подарок в инвентарь
+
         user_inventory[user_id]['gifts'].append(gift_id)
 
-        # Безопасно удаляем пользователя из списка оплативших
-        paid_users.pop(user_id, None)  # Не вызовет ошибку, если user_id нет
+
+        paid_users.pop(user_id, None)
 
         return {"telegram_gift_id": gift_id['telegram_id'],
                 "gift_id": gift_id['gift_id'],
@@ -315,7 +318,7 @@ async def roulette_spin(user_id: int):
                 "star": gift_id['star']}
 
     except Exception as e:
-        # В случае ошибки оставляем пользователя в paid_users для повторной попытки
+
         raise HTTPException(
             status_code=500,
             detail=f"Spin failed: {str(e)}"
@@ -342,7 +345,6 @@ async def get_payment_status(user_id: int):
 
 @router.pre_checkout_query()
 async def pre_checkout_handler(query: types.PreCheckoutQuery):
-    """Подтверждение платежа"""
     await bot.answer_pre_checkout_query(query.id, ok=True)
 
 @router.message()
@@ -375,11 +377,10 @@ async def process_refund(message: Message):
 
 
 if __name__ == "__main__":
-    # Проверка переменных окружения
     if not os.getenv('BOT_TOKEN'):
         raise EnvironmentError("❌ Токен бота не найден в переменных окружения")
 
-    # Запуск сервера
+
     config = uvicorn.Config(
         app,
         host="localhost",
