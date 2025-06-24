@@ -310,6 +310,11 @@ async def roulette_spin(user_id: int):
         )
 
 
+@app.get('/user_inventory')
+async def get_user_inventory(user_id: int):
+    return {f"{user_id} inventory": user_inventory[user_id]}
+
+
 @app.get("/status")
 async def get_payment_status(user_id: int):
     logger.info(f"Запрос статуса от user_id={user_id}")
